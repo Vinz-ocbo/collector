@@ -6,4 +6,5 @@ export { LoginPage } from './LoginPage';
 export { SignupPage } from './SignupPage';
 export { ForgotPasswordPage } from './ForgotPasswordPage';
 export { createMockAuthBackend } from './mockBackend';
+export { createSupabaseAuthBackend, type SupabaseAuthBackendOptions } from './supabaseBackend';
 export { AuthError, type Session, type AuthBackend, type AuthErrorCode } from './types';

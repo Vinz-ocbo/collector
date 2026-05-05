@@ -323,7 +323,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 
 ## What's NOT yet wired (intentional gaps for later)
 
-- **Real auth provider** — pick Auth0/Clerk/Supabase, write `createXxxAuthBackend()`, swap in `providers.tsx`. The mock is dev-only.
+- **Real auth provider — Supabase scaffold ready** ✅ — `createSupabaseAuthBackend()` lives in `src/features/auth/supabaseBackend.ts` and is selected by `providers.tsx` when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are both set. To go live: create a Supabase project, paste the project URL and anon key into your local `.env`, restart Vite. Mock auth stays the dev default. Other providers (Auth0/Clerk) would mirror this — write a `createXxxAuthBackend` and add it to the `providers.tsx` switch.
 - **OAuth buttons on Login/Signup** — currently stubs that show a "bientôt disponible" toast.
 - **Real Scryfall integration** ✅ — `createScryfallSearchBackend()` talks to the Fastify proxy. `providers.tsx` picks mock vs HTTP based on `VITE_API_BASE_URL`. See the "Backend (Fastify + Postgres)" section below for setup.
 - **Search filters bottom sheet** ✅ — `SearchFiltersSheet.tsx` (color / rarity / set picker / **price range (EUR min/max)** / hideOwned). Active-filter chips on `SearchPage`, including a price chip that summarizes the bounds. Price filter is wired end-to-end: backend Drizzle repo casts the TEXT-stored `price_eur` to numeric for the comparison, the Scryfall fallback path uses `eur>=N` / `eur<=N` query syntax, and the frontend mock filters in-memory. Cards without a price are excluded as soon as either bound is set.
@@ -338,8 +338,8 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Custom binder header** ✅ — when the URL has `?binderId=X`, `BinderHeader` replaces the generic Collection header: icon + name + items/value summary + back-to-binders button + kebab (Renommer / Vider / Supprimer). Deleting from this header navigates back to `/collection/binders`.
 - **i18n DONE** — all UI strings extracted (~250 keys, FR + EN). UI language switcher lives on the Profile page (`LanguageSwitcher.tsx`); persistence handled by `LanguageDetector`'s `localStorage` cache (`tcg-collector.lang`).
 - **Auth + collection sync routes on the backend** — proxy + ingest are live; auth and `/v1/collection/*` endpoints are not yet implemented.
-- **Sync layer** — `CollectionItem.syncStatus` is set to `'pending'` on writes but no sync queue exists yet.
-- **TanStack Query Devtools**, **Sentry / global error boundary**, **Husky/lint-staged**, **Lighthouse CI**.
+- **Sync layer v0** ✅ — `src/features/sync/` ships a small `SyncBackend` interface (`pushItem` only — deletes need tombstones, deferred), a no-op mock backend, and a `runSync(backend)` queue that walks the pending items, pushes each, and flips `syncStatus` to `'synced'` or `'error'`. Hooks: `usePendingSyncCount` + `useRunSync` (TanStack mutation). Once a real backend lands, write `createHttpSyncBackend()` and pass it to `<SyncBackendProvider>` in `providers.tsx`. No periodic auto-flush yet — calls are manual via `useRunSync().mutate()`.
+- **Sentry / global error boundary**, **Husky/lint-staged**, **Lighthouse CI**. (TanStack Query Devtools ✅ — lazy-mounted dev-only via `import.meta.env.DEV`, button bottom-left.)
 - **PWA icons** (placeholders in `public/icons/`).
 - **TensorFlow.js / Tesseract.js** for card recognition.
 - **Combobox / Select / Tooltip / Checkbox / RadioGroup** — Radix deps installed, components not yet built.

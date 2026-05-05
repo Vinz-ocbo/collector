@@ -24,6 +24,6 @@ export {
   useSaveCollectionViewPrefs,
   DEFAULT_VIEW_PREFS,
 } from './hooks';
-export { seedDemoData } from './repository';
+export { addItem, seedDemoData, upsertCards } from './repository';
 export type { BinderSummary, CollectionItemWithCard, ItemFilter, ItemSort } from './repository';
 export type { CollectionViewPrefs } from './preferences';
