@@ -1,0 +1,395 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "apply": "Apply",
+    "reset": "Reset",
+    "loading": "Loading…",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "clear": "Clear",
+    "retry": "Retry"
+  },
+  "tabs": {
+    "collection": "Collection",
+    "search": "Search",
+    "scan": "Scan",
+    "stats": "Stats",
+    "profile": "Profile",
+    "navigation": "Main navigation"
+  },
+  "appGate": {
+    "loading": "Loading…"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This card is no longer in the deck."
+  },
+  "auth": {
+    "layout": {
+      "loading": "Loading…"
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your collection.",
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "or": "or",
+      "email": "Email",
+      "password": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "No account?",
+      "signupLink": "Sign up",
+      "errorInvalidCredentials": "Wrong email or password.",
+      "errorGeneric": "Sign-in failed. Please try again later.",
+      "oauthSoon": {
+        "title": "{{provider}} coming soon",
+        "description": "OAuth wiring will be added once the provider is chosen."
+      }
+    },
+    "signup": {
+      "title": "Create an account",
+      "email": "Email",
+      "password": "Password",
+      "passwordRules": {
+        "length": "8 characters minimum",
+        "number": "1 digit",
+        "uppercase": "1 uppercase letter"
+      },
+      "acceptTermsLabel": "I accept the",
+      "acceptTermsLink": "Terms and Privacy Policy",
+      "submit": "Create my account",
+      "submitting": "Creating…",
+      "alreadyAccount": "Already registered?",
+      "loginLink": "Sign in",
+      "errorGeneric": "Sign-up failed. Please try again later.",
+      "submitted": {
+        "title": "Check your email",
+        "description": "If an account does not already exist with <strong>{{email}}</strong>, you will receive an activation link shortly."
+      },
+      "backToLogin": "Back to sign in"
+    },
+    "forgot": {
+      "title": "Forgot password?",
+      "subtitle": "Enter your email and we will send you a reset link.",
+      "email": "Email",
+      "submit": "Send the link",
+      "submitting": "Sending…",
+      "submitted": {
+        "title": "Email sent",
+        "description": "If an account exists with <strong>{{email}}</strong>, you will receive a link shortly. Check your spam folder if needed."
+      },
+      "resend": "Resend the link",
+      "resendCooldown": "Resend ({{seconds}}s)",
+      "backToLogin": "Back to sign in"
+    },
+    "schemas": {
+      "emailInvalid": "Invalid email address",
+      "passwordMinLength": "8 characters minimum",
+      "passwordNumber": "At least 1 digit",
+      "passwordUppercase": "At least 1 uppercase letter",
+      "passwordRequired": "Password required",
+      "termsRequired": "You must accept the Terms"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip →",
+    "back": "← Back",
+    "continue": "Continue",
+    "start": "Get started",
+    "progressLabel": "Onboarding progress",
+    "stepLabel": "Step {{current}} of {{total}}",
+    "slides": {
+      "1": {
+        "title": "Your collection, with you everywhere",
+        "description": "Inventory, organize and find your cards in seconds."
+      },
+      "2": {
+        "title": "Snap a photo, we handle the rest",
+        "description": "Scan a single card or a whole batch. Validate in a tap."
+      },
+      "3": {
+        "title": "Works offline too",
+        "description": "Browse and add cards offline. Sync happens when you reconnect."
+      }
+    }
+  },
+  "collection": {
+    "title": "My collection",
+    "titleWithCount": "My collection ({{count}})",
+    "empty": {
+      "title": "No cards yet",
+      "description": "Manual add and scan are coming soon. In the meantime, load a demo set to explore the UI.",
+      "loadDemo": "Load a demo set",
+      "loadingDemo": "Loading…",
+      "demoLoaded": {
+        "title": "Demo data loaded",
+        "description": "{{cards}} cards · {{items}} added"
+      }
+    },
+    "emptyFiltered": {
+      "title": "No cards match",
+      "description": "Adjust or remove filters to see more cards.",
+      "reset": "Reset filters"
+    },
+    "error": {
+      "title": "Could not load collection",
+      "description": "Try again or contact support if the problem persists."
+    },
+    "filters": {
+      "title": "Filters",
+      "label": "Filters",
+      "color": "Color",
+      "rarity": "Rarity",
+      "condition": "Condition",
+      "foil": "Foil",
+      "foilAll": "All",
+      "foilFoil": "Foil",
+      "foilNonFoil": "Non-foil",
+      "removeChip": "Remove filter {{label}}",
+      "clearAll": "Clear all",
+      "chipColor": "Color · {{count}}",
+      "chipRarity": "Rarity · {{count}}",
+      "chipCondition": "Condition · {{count}}"
+    },
+    "sort": {
+      "title": "Sort by",
+      "label": "Sort",
+      "addedAtDesc": "Date added (newest → oldest)",
+      "addedAtDescShort": "Newest",
+      "addedAtAsc": "Date added (oldest → newest)",
+      "addedAtAscShort": "Oldest",
+      "nameAsc": "Name (A → Z)",
+      "nameAscShort": "Name A→Z",
+      "nameDesc": "Name (Z → A)",
+      "nameDescShort": "Name Z→A",
+      "priceDesc": "Value (high → low)",
+      "priceDescShort": "Value ↓",
+      "priceAsc": "Value (low → high)",
+      "priceAscShort": "Value ↑",
+      "rarityDesc": "Rarity (mythic → common)",
+      "rarityDescShort": "Rarity"
+    },
+    "view": {
+      "title": "Display",
+      "list": "List",
+      "listFull": "Compact list",
+      "listDescription": "Maximum density",
+      "grid": "Grid",
+      "gridDescription": "Image-first",
+      "stack": "Stack",
+      "stackDescription": "Grouped by name",
+      "modeLabel": "Display mode"
+    },
+    "stack": {
+      "versions": "{{count}} versions · {{sets}}"
+    },
+    "altLabel": "{{name}}, {{setName}}, owned {{count}} times",
+    "foil": "Foil",
+    "item": {
+      "title": "Card",
+      "notFoundTitle": "Card not found",
+      "notFoundBody": "This card is no longer in your collection.",
+      "backToCollection": "Back to collection",
+      "myExemplar": "My copy",
+      "characteristics": "Characteristics",
+      "quantity": "Quantity",
+      "quantityValue": "×{{count}}",
+      "condition": "Condition",
+      "foil": "Foil",
+      "language": "Language",
+      "addedAt": "Added on",
+      "pricePaid": "Paid price",
+      "set": "Set",
+      "collectorNumber": "No.",
+      "rarity": "Rarity",
+      "artist": "Artist",
+      "manaCost": "Mana cost",
+      "type": "Type",
+      "powerToughness": "P/T",
+      "loyalty": "Loyalty",
+      "estimatedPrice": "Estimated price",
+      "edit": "Edit",
+      "deleteAction": "Delete",
+      "deleteTitle": "Delete this copy?",
+      "deleteDescription": "<strong>{{name}}</strong> ×{{quantity}} will be removed from your collection. Irreversible.",
+      "deleteConfirm": "Delete",
+      "deleting": "Deleting…",
+      "deletedToast": {
+        "title": "Copy deleted",
+        "description": "{{name}} removed from your collection"
+      }
+    },
+    "edit": {
+      "title": "Edit",
+      "save": "Save",
+      "saving": "Saving…",
+      "savedToast": "Changes saved",
+      "quantityZeroWarning": "Saving with a quantity of 0 deletes this copy.",
+      "quantityLabel": "Quantity",
+      "conditionLabel": "Condition",
+      "foilLabel": "Foil",
+      "languageLabel": "Language",
+      "notesLabel": "Notes (optional)",
+      "notesPlaceholder": "Bought at XYZ store…"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Name, oracle text, set…",
+    "ariaLabel": "Search a card",
+    "clear": "Clear search",
+    "recentTitle": "Recent searches",
+    "clearRecents": "Clear",
+    "promptTitle": "Search a card",
+    "promptDescription": "Type at least 2 characters to search the Scryfall catalog.",
+    "noResultsFilteredDescription": "No card matches the active filters. Try removing some.",
+    "filters": {
+      "label": "Filters",
+      "title": "Filters",
+      "color": "Color",
+      "rarity": "Rarity",
+      "set": "Set",
+      "setSearchPlaceholder": "Find a set…",
+      "setEmpty": "No matching set.",
+      "setLoading": "Loading sets…",
+      "hideOwned": "Hide cards I already own",
+      "chipColor_one": "Color ({{count}})",
+      "chipColor_other": "Colors ({{count}})",
+      "chipRarity_one": "Rarity ({{count}})",
+      "chipRarity_other": "Rarities ({{count}})",
+      "chipSet_one": "Set ({{count}})",
+      "chipSet_other": "Sets ({{count}})",
+      "chipHideOwned": "Not owned",
+      "removeChip": "Remove {{label}} filter",
+      "clearAll": "Clear all"
+    },
+    "sort": {
+      "title": "Sort",
+      "label": "Sort",
+      "relevance": "Relevance",
+      "nameAsc": "Name (A→Z)",
+      "nameDesc": "Name (Z→A)",
+      "priceDesc": "Price desc",
+      "priceAsc": "Price asc",
+      "relevanceShort": "Relevance",
+      "nameAscShort": "A→Z",
+      "nameDescShort": "Z→A",
+      "priceDescShort": "€ ↓",
+      "priceAscShort": "€ ↑"
+    },
+    "errorTitle": "Search unavailable",
+    "errorDescription": "Something went wrong. Please try again.",
+    "noResultsTitle": "No results",
+    "noResultsDescription": "No card matches « {{query}} ».",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "ownedAriaLabel": "Owned {{count}} times",
+    "owned": {
+      "title": "You already own {{count}} copy",
+      "title_plural": "You already own {{count}} copies",
+      "viewMine": "View my copies"
+    },
+    "card": {
+      "loading": "Card",
+      "notFoundTitle": "Card not found",
+      "notFoundBody": "This card is not in the local catalog.",
+      "backToSearch": "Back to search",
+      "addToCollection": "Add to collection",
+      "characteristics": "Characteristics",
+      "notOwnedHint": "Not yet in your collection"
+    },
+    "addSheet": {
+      "title": "Add to collection",
+      "submit": "Add to collection",
+      "submitting": "Adding…",
+      "addedToast": {
+        "title": "Card added",
+        "description": "{{name}} ×{{quantity}} added to your collection"
+      }
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "loadingError": "Statistics unavailable",
+    "loadingErrorDescription": "Try again or contact support if the problem persists.",
+    "emptyTitle": "No stats yet",
+    "emptyDescription": "Add a few cards to see distributions appear.",
+    "emptyAction": "Go to my collection",
+    "kpi": {
+      "totalCards": "cards total",
+      "totalCardsDetail": "{{unique}} unique · {{duplicates}} duplicates",
+      "totalValue": "estimated total value",
+      "monthAddition_one": "+{{count}} card this month",
+      "monthAddition_other": "+{{count}} cards this month",
+      "noMonthAddition": "No additions this month"
+    },
+    "tilesHeading": "Browse by",
+    "tiles": {
+      "byColor": "By color",
+      "byType": "By type",
+      "byRarity": "By rarity"
+    },
+    "topHeading": "Top of my collection",
+    "byColor": {
+      "title": "By color",
+      "emptyTitle": "No distribution yet",
+      "emptyDescription": "Add cards to your collection to see their color distribution.",
+      "legendHeading": "Legend",
+      "topHeading": "Top by color",
+      "centerLabel": "cards"
+    },
+    "byType": {
+      "title": "By type",
+      "emptyTitle": "No distribution yet",
+      "emptyDescription": "Add cards to see the type distribution.",
+      "unit": "cards"
+    },
+    "byRarity": {
+      "title": "By rarity",
+      "emptyTitle": "No distribution yet",
+      "emptyDescription": "Add cards to see the rarity distribution.",
+      "valueHeading": "Value by rarity",
+      "centerLabel": "cards",
+      "unit": "€"
+    },
+    "colors": {
+      "W": "White",
+      "U": "Blue",
+      "B": "Black",
+      "R": "Red",
+      "G": "Green",
+      "C": "Colorless",
+      "M": "Multicolor"
+    },
+    "rarities": {
+      "mythic": "Mythic",
+      "rare": "Rare",
+      "uncommon": "Uncommon",
+      "common": "Common",
+      "special": "Special",
+      "bonus": "Bonus"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "loggedInAs": "Signed in as",
+    "applicationHeading": "Application",
+    "applicationStub": "Preferences, data and legal will arrive in upcoming steps.",
+    "signOut": "Sign out",
+    "signOutTitle": "Sign out?",
+    "signOutDescription": "Your data stays in the cloud. You can sign back in any time.",
+    "signingOut": "Signing out…"
+  }
+}

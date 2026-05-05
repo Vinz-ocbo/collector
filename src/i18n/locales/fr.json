@@ -1,0 +1,395 @@
+{
+  "common": {
+    "back": "Retour",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "apply": "Appliquer",
+    "reset": "Réinitialiser",
+    "loading": "Chargement…",
+    "all": "Tous",
+    "yes": "Oui",
+    "no": "Non",
+    "search": "Rechercher",
+    "clear": "Effacer",
+    "retry": "Réessayer"
+  },
+  "tabs": {
+    "collection": "Collection",
+    "search": "Recherche",
+    "scan": "Scan",
+    "stats": "Stats",
+    "profile": "Profil",
+    "navigation": "Navigation principale"
+  },
+  "appGate": {
+    "loading": "Chargement…"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Cette carte n’est plus dans le paquet."
+  },
+  "auth": {
+    "layout": {
+      "loading": "Chargement…"
+    },
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous à votre collection.",
+      "google": "Continuer avec Google",
+      "apple": "Continuer avec Apple",
+      "or": "ou",
+      "email": "Email",
+      "password": "Mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "noAccount": "Pas de compte ?",
+      "signupLink": "Inscription",
+      "errorInvalidCredentials": "Email ou mot de passe incorrect.",
+      "errorGeneric": "Connexion impossible. Réessayez plus tard.",
+      "oauthSoon": {
+        "title": "{{provider}} bientôt disponible",
+        "description": "Le branchement OAuth sera ajouté quand le provider sera choisi."
+      }
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "email": "Email",
+      "password": "Mot de passe",
+      "passwordRules": {
+        "length": "8 caractères minimum",
+        "number": "1 chiffre",
+        "uppercase": "1 majuscule"
+      },
+      "acceptTermsLabel": "J’accepte les",
+      "acceptTermsLink": "CGU et la politique de confidentialité",
+      "submit": "Créer mon compte",
+      "submitting": "Création…",
+      "alreadyAccount": "Déjà inscrit ?",
+      "loginLink": "Se connecter",
+      "errorGeneric": "Inscription impossible. Réessayez plus tard.",
+      "submitted": {
+        "title": "Vérifiez votre email",
+        "description": "Si un compte n’existe pas déjà avec <strong>{{email}}</strong>, vous recevrez un lien d’activation dans quelques minutes."
+      },
+      "backToLogin": "Retour à la connexion"
+    },
+    "forgot": {
+      "title": "Mot de passe oublié ?",
+      "subtitle": "Entrez votre email, nous vous envoyons un lien pour le réinitialiser.",
+      "email": "Email",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi…",
+      "submitted": {
+        "title": "Email envoyé",
+        "description": "Si un compte existe avec <strong>{{email}}</strong>, vous recevrez un lien dans quelques minutes. Vérifiez vos spams au besoin."
+      },
+      "resend": "Renvoyer le lien",
+      "resendCooldown": "Renvoyer ({{seconds}} s)",
+      "backToLogin": "Retour à la connexion"
+    },
+    "schemas": {
+      "emailInvalid": "Adresse email invalide",
+      "passwordMinLength": "8 caractères minimum",
+      "passwordNumber": "Au moins 1 chiffre",
+      "passwordUppercase": "Au moins 1 majuscule",
+      "passwordRequired": "Mot de passe requis",
+      "termsRequired": "Vous devez accepter les CGU"
+    }
+  },
+  "onboarding": {
+    "skip": "Passer →",
+    "back": "← Retour",
+    "continue": "Continuer",
+    "start": "Commencer",
+    "progressLabel": "Progression de l’onboarding",
+    "stepLabel": "Étape {{current}} sur {{total}}",
+    "slides": {
+      "1": {
+        "title": "Votre collection, partout avec vous",
+        "description": "Inventoriez, organisez et retrouvez vos cartes en quelques secondes."
+      },
+      "2": {
+        "title": "Photographiez, on s’occupe du reste",
+        "description": "Scannez une carte ou un lot entier. Validez en un tap."
+      },
+      "3": {
+        "title": "Sans connexion, ça marche aussi",
+        "description": "Consultez et ajoutez vos cartes hors-ligne. La sync se fait quand vous revenez en ligne."
+      }
+    }
+  },
+  "collection": {
+    "title": "Ma collection",
+    "titleWithCount": "Ma collection ({{count}})",
+    "empty": {
+      "title": "Pas encore de cartes",
+      "description": "L’ajout par recherche et le scan arriveront aux prochaines étapes. En attendant, chargez un jeu de démo pour explorer l’interface.",
+      "loadDemo": "Charger un jeu de démo",
+      "loadingDemo": "Chargement…",
+      "demoLoaded": {
+        "title": "Données de démo chargées",
+        "description": "{{cards}} cartes · {{items}} ajoutées"
+      }
+    },
+    "emptyFiltered": {
+      "title": "Aucune carte ne correspond",
+      "description": "Ajustez ou retirez des filtres pour voir plus de cartes.",
+      "reset": "Réinitialiser les filtres"
+    },
+    "error": {
+      "title": "Impossible de charger la collection",
+      "description": "Réessayez ou contactez le support si le problème persiste."
+    },
+    "filters": {
+      "title": "Filtres",
+      "label": "Filtres",
+      "color": "Couleur",
+      "rarity": "Rareté",
+      "condition": "État",
+      "foil": "Foil",
+      "foilAll": "Tous",
+      "foilFoil": "Foil",
+      "foilNonFoil": "Non-foil",
+      "removeChip": "Retirer le filtre {{label}}",
+      "clearAll": "Tout effacer",
+      "chipColor": "Couleur · {{count}}",
+      "chipRarity": "Rareté · {{count}}",
+      "chipCondition": "État · {{count}}"
+    },
+    "sort": {
+      "title": "Trier par",
+      "label": "Tri",
+      "addedAtDesc": "Date d’ajout (récent → ancien)",
+      "addedAtDescShort": "Ajout récent",
+      "addedAtAsc": "Date d’ajout (ancien → récent)",
+      "addedAtAscShort": "Ajout ancien",
+      "nameAsc": "Nom (A → Z)",
+      "nameAscShort": "Nom A→Z",
+      "nameDesc": "Nom (Z → A)",
+      "nameDescShort": "Nom Z→A",
+      "priceDesc": "Valeur (élevée → basse)",
+      "priceDescShort": "Valeur ↓",
+      "priceAsc": "Valeur (basse → élevée)",
+      "priceAscShort": "Valeur ↑",
+      "rarityDesc": "Rareté (mythique → common)",
+      "rarityDescShort": "Rareté"
+    },
+    "view": {
+      "title": "Affichage",
+      "list": "Liste",
+      "listFull": "Liste compacte",
+      "listDescription": "Densité maximale",
+      "grid": "Grille",
+      "gridDescription": "Image dominante",
+      "stack": "Pile",
+      "stackDescription": "Regroupée par nom",
+      "modeLabel": "Mode d’affichage"
+    },
+    "stack": {
+      "versions": "{{count}} versions · {{sets}}"
+    },
+    "altLabel": "{{name}}, {{setName}}, possédée {{count}} fois",
+    "foil": "Foil",
+    "item": {
+      "title": "Carte",
+      "notFoundTitle": "Carte introuvable",
+      "notFoundBody": "Cette carte n’est plus dans votre collection.",
+      "backToCollection": "Retour à la collection",
+      "myExemplar": "Mon exemplaire",
+      "characteristics": "Caractéristiques",
+      "quantity": "Quantité",
+      "quantityValue": "×{{count}}",
+      "condition": "État",
+      "foil": "Foil",
+      "language": "Langue",
+      "addedAt": "Ajoutée le",
+      "pricePaid": "Prix payé",
+      "set": "Set",
+      "collectorNumber": "N°",
+      "rarity": "Rareté",
+      "artist": "Artiste",
+      "manaCost": "Coût",
+      "type": "Type",
+      "powerToughness": "P/T",
+      "loyalty": "Loyauté",
+      "estimatedPrice": "Prix estimé",
+      "edit": "Modifier",
+      "deleteAction": "Supprimer",
+      "deleteTitle": "Supprimer cet exemplaire ?",
+      "deleteDescription": "<strong>{{name}}</strong> ×{{quantity}} sera retiré de votre collection. Action irréversible.",
+      "deleteConfirm": "Supprimer",
+      "deleting": "Suppression…",
+      "deletedToast": {
+        "title": "Exemplaire supprimé",
+        "description": "{{name}} retiré de votre collection"
+      }
+    },
+    "edit": {
+      "title": "Modifier",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "savedToast": "Modifications enregistrées",
+      "quantityZeroWarning": "Sauvegarder avec une quantité de 0 supprime cet exemplaire.",
+      "quantityLabel": "Quantité",
+      "conditionLabel": "État",
+      "foilLabel": "Foil",
+      "languageLabel": "Langue",
+      "notesLabel": "Notes (facultatif)",
+      "notesPlaceholder": "Achat boutique XYZ…"
+    }
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Nom, texte oracle, set…",
+    "ariaLabel": "Rechercher une carte",
+    "clear": "Effacer la recherche",
+    "recentTitle": "Recherches récentes",
+    "clearRecents": "Effacer",
+    "promptTitle": "Cherchez une carte",
+    "promptDescription": "Tapez au moins 2 caractères pour interroger le catalogue Scryfall.",
+    "noResultsFilteredDescription": "Aucune carte ne correspond aux filtres actifs. Essayez d’en retirer.",
+    "filters": {
+      "label": "Filtres",
+      "title": "Filtres",
+      "color": "Couleur",
+      "rarity": "Rareté",
+      "set": "Set / Extension",
+      "setSearchPlaceholder": "Rechercher un set…",
+      "setEmpty": "Aucun set ne correspond.",
+      "setLoading": "Chargement des sets…",
+      "hideOwned": "Masquer les cartes que je possède déjà",
+      "chipColor_one": "Couleur ({{count}})",
+      "chipColor_other": "Couleurs ({{count}})",
+      "chipRarity_one": "Rareté ({{count}})",
+      "chipRarity_other": "Raretés ({{count}})",
+      "chipSet_one": "Set ({{count}})",
+      "chipSet_other": "Sets ({{count}})",
+      "chipHideOwned": "Non possédées",
+      "removeChip": "Retirer le filtre {{label}}",
+      "clearAll": "Tout effacer"
+    },
+    "sort": {
+      "title": "Trier",
+      "label": "Trier",
+      "relevance": "Pertinence",
+      "nameAsc": "Nom (A→Z)",
+      "nameDesc": "Nom (Z→A)",
+      "priceDesc": "Prix décroissant",
+      "priceAsc": "Prix croissant",
+      "relevanceShort": "Pertinence",
+      "nameAscShort": "A→Z",
+      "nameDescShort": "Z→A",
+      "priceDescShort": "€ ↓",
+      "priceAscShort": "€ ↑"
+    },
+    "errorTitle": "Recherche indisponible",
+    "errorDescription": "Une erreur est survenue. Réessayez dans un instant.",
+    "noResultsTitle": "Aucun résultat",
+    "noResultsDescription": "Aucune carte ne correspond à « {{query}} ».",
+    "results_one": "{{count}} résultat",
+    "results_other": "{{count}} résultats",
+    "ownedAriaLabel": "Possédée {{count}} fois",
+    "owned": {
+      "title": "Vous possédez déjà {{count}} exemplaire",
+      "title_plural": "Vous possédez déjà {{count}} exemplaires",
+      "viewMine": "Voir mes exemplaires"
+    },
+    "card": {
+      "loading": "Carte",
+      "notFoundTitle": "Carte introuvable",
+      "notFoundBody": "Cette carte n’est pas dans le catalogue local.",
+      "backToSearch": "Retour à la recherche",
+      "addToCollection": "Ajouter à ma collection",
+      "characteristics": "Caractéristiques",
+      "notOwnedHint": "Pas encore dans votre collection"
+    },
+    "addSheet": {
+      "title": "Ajouter à ma collection",
+      "submit": "Ajouter à ma collection",
+      "submitting": "Ajout…",
+      "addedToast": {
+        "title": "Carte ajoutée",
+        "description": "{{name}} ×{{quantity}} dans votre collection"
+      }
+    }
+  },
+  "stats": {
+    "title": "Statistiques",
+    "loadingError": "Statistiques indisponibles",
+    "loadingErrorDescription": "Réessayez ou contactez le support si le problème persiste.",
+    "emptyTitle": "Pas encore de statistiques",
+    "emptyDescription": "Ajoutez quelques cartes à votre collection pour voir apparaître les répartitions.",
+    "emptyAction": "Aller à ma collection",
+    "kpi": {
+      "totalCards": "cartes au total",
+      "totalCardsDetail": "{{unique}} uniques · {{duplicates}} doublons",
+      "totalValue": "valeur estimée totale",
+      "monthAddition_one": "+{{count}} carte ce mois",
+      "monthAddition_other": "+{{count}} cartes ce mois",
+      "noMonthAddition": "Aucun ajout ce mois"
+    },
+    "tilesHeading": "Voir par",
+    "tiles": {
+      "byColor": "Par couleur",
+      "byType": "Par type",
+      "byRarity": "Par rareté"
+    },
+    "topHeading": "Top de ma collection",
+    "byColor": {
+      "title": "Par couleur",
+      "emptyTitle": "Pas encore de répartition",
+      "emptyDescription": "Ajoutez des cartes à votre collection pour voir leur répartition par couleur.",
+      "legendHeading": "Légende",
+      "topHeading": "Top par couleur",
+      "centerLabel": "cartes"
+    },
+    "byType": {
+      "title": "Par type",
+      "emptyTitle": "Pas encore de répartition",
+      "emptyDescription": "Ajoutez des cartes pour voir la répartition par type.",
+      "unit": "cartes"
+    },
+    "byRarity": {
+      "title": "Par rareté",
+      "emptyTitle": "Pas encore de répartition",
+      "emptyDescription": "Ajoutez des cartes pour voir la répartition par rareté.",
+      "valueHeading": "Valeur par rareté",
+      "centerLabel": "cartes",
+      "unit": "€"
+    },
+    "colors": {
+      "W": "Blanc",
+      "U": "Bleu",
+      "B": "Noir",
+      "R": "Rouge",
+      "G": "Vert",
+      "C": "Incolore",
+      "M": "Multicolore"
+    },
+    "rarities": {
+      "mythic": "Mythic",
+      "rare": "Rare",
+      "uncommon": "Uncommon",
+      "common": "Common",
+      "special": "Special",
+      "bonus": "Bonus"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "loggedInAs": "Connecté en tant que",
+    "applicationHeading": "Application",
+    "applicationStub": "Préférences, données et mentions légales arriveront aux prochaines étapes.",
+    "signOut": "Se déconnecter",
+    "signOutTitle": "Se déconnecter ?",
+    "signOutDescription": "Vos données restent disponibles dans le cloud. Vous pourrez vous reconnecter à tout moment.",
+    "signingOut": "Déconnexion…"
+  }
+}

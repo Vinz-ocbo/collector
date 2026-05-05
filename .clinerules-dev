@@ -1,0 +1,290 @@
+# .clinerules — Application de gestion de collection de cartes (Magic, Pokémon)
+
+> Document de cadrage pour un développeur mobile senior.
+> Périmètre initial : **Magic: The Gathering**. L'architecture doit anticiper l'ajout de **Pokémon** (et autres TCG) sans réécriture majeure.
+
+---
+
+## 1. Identité du projet
+
+- **Nom de code** : `tcg-collector` (à adapter)
+- **Type** : Progressive Web App (PWA) **mobile-first**, fonctionnelle sur navigateur desktop.
+- **Public cible** : collectionneurs et joueurs souhaitant inventorier, organiser et photographier leurs cartes.
+- **Fonctionnalités clés (MVP Magic)** :
+  1. Saisie manuelle d'une carte via un back-office (recherche par nom, set, numéro de collation).
+  2. Saisie par photographie : carte unique ou lot de cartes (détection multi-cartes + reconnaissance).
+  3. Gestion de la collection : tags, classeurs/binders, état (NM, LP, MP, HP, DMG), langue, foil, quantités.
+  4. Recherche, tri, filtres avancés.
+  5. Statistiques de collection (valeur estimée, complétion par set, répartition par couleur/type).
+  6. Export/import (CSV, JSON ; format compatible Moxfield, Archidekt à terme).
+- **Hors périmètre MVP** : marketplace, deck-building, multi-utilisateurs en temps réel.
+
+---
+
+## 2. Stack technique imposée
+
+### Front (PWA)
+- **Framework** : React 18+ avec **TypeScript strict**.
+- **Build** : Vite (HMR rapide, build optimisé).
+- **Routing** : React Router v6+ (lazy-loading par route obligatoire).
+- **State management** :
+  - UI/local : React state + Context (parcimonie).
+  - Données serveur/cache : **TanStack Query (React Query)** — invalidation, cache, retry, optimistic updates.
+  - Global persistant léger : **Zustand** si besoin (préférer Query quand possible).
+- **Styling** : Tailwind CSS + composants headless (Radix UI ou Headless UI). Pas de CSS-in-JS runtime.
+- **Formulaires** : React Hook Form + Zod (validation partagée front/back).
+- **PWA** : `vite-plugin-pwa` (Workbox), manifest complet, icônes maskable, stratégie offline-first sur les données critiques.
+
+### Stockage local
+- **IndexedDB** via **Dexie.js** : collection, cartes, photos en attente de sync.
+- **Cache HTTP** géré par Workbox (stale-while-revalidate pour les images Scryfall).
+- **Pas de `localStorage`** pour des données métier (limite 5MB, synchrone).
+
+### Reconnaissance de cartes
+- **Photo unique** : capture via `MediaDevices.getUserMedia` + `<input type="file" capture>` en fallback.
+- **Multi-cartes** : détection d'objets (segmentation) côté client si possible — TensorFlow.js / ONNX Runtime Web — sinon offload serveur.
+- **OCR / reconnaissance** :
+  - Approche recommandée : extraction du nom + set symbol + numéro de collation, puis lookup Scryfall.
+  - Tesseract.js pour le texte ; modèle de classification entraîné pour le set symbol (étape 2).
+  - Toujours présenter à l'utilisateur une **liste de candidats avec confiance** + validation manuelle. Ne jamais auto-valider sans confirmation visuelle.
+
+### Back / API
+- **Source de vérité Magic** : [Scryfall API](https://scryfall.com/docs/api).
+  - Respecter le rate limit (50–100 ms entre requêtes, max ~10 req/s).
+  - User-Agent identifiable obligatoire (`TCGCollector/x.y.z`).
+  - Bulk data téléchargé périodiquement (1×/semaine) et stocké côté serveur pour requêtes locales rapides.
+  - Respect strict des conditions d'usage Scryfall (pas de paywall sur les données, pas d'altération des images, mentions copyright Wizards préservées).
+- **Backend custom** : Node.js (Fastify ou NestJS) + PostgreSQL.
+  - Endpoints minimaux : auth, collection CRUD, sync photos→reconnaissance, proxy/cache Scryfall.
+  - Le client ne tape **jamais** Scryfall directement en production (pour respecter le rate limit globalement et masquer les détails).
+- **Authentification** : OAuth2 / OpenID Connect (Auth0, Clerk, ou Supabase Auth) — pas d'auth maison.
+
+### Tests
+- **Unitaires** : Vitest (rapide, intégré à Vite).
+- **Composants** : Testing Library (React).
+- **E2E** : Playwright (mobile viewport en priorité).
+- **Couverture cible** : ≥ 80 % sur la logique métier (services, hooks, reducers). Pas de course au pourcentage sur le pur affichage.
+
+---
+
+## 3. Architecture & maintenabilité
+
+### Architecture en couches (clean / hexagonal allégée)
+```
+src/
+  app/                # bootstrap, providers, routes
+  features/           # une feature = un dossier (collection, scan, search, stats…)
+    <feature>/
+      components/     # UI spécifique
+      hooks/
+      services/       # logique métier pure (testable sans DOM)
+      types.ts
+      index.ts        # API publique de la feature
+  shared/
+    ui/               # design system (Button, Card, Modal…)
+    lib/              # utilitaires purs
+    api/              # clients HTTP (Scryfall, backend)
+    db/               # Dexie schemas + migrations
+    domain/           # types métier indépendants du TCG (Card, CardSet, Collection…)
+  tcg/
+    magic/            # adaptateur Magic (mapping Scryfall → domain)
+    pokemon/          # placeholder, vide au début
+    index.ts          # registry des TCG supportés
+```
+
+### Règles de design
+- **Abstraction TCG-agnostique** : le domaine (`shared/domain`) ne connaît ni Magic ni Pokémon. Chaque TCG fournit un **adaptateur** qui implémente une interface (`TcgProvider`) : `searchCards`, `getCardById`, `recognizeFromImage`, `getSets`, etc. Ajouter Pokémon = ajouter un dossier `tcg/pokemon` qui implémente cette interface.
+- **Dependency rule** : `features` peut dépendre de `shared` ; `shared` ne dépend de rien d'applicatif ; `tcg/*` ne dépend que de `shared/domain`.
+- **Pas de logique métier dans les composants React.** Les composants orchestrent ; les hooks et services calculent.
+- **Une feature = une frontière.** L'export d'une feature passe par son `index.ts`. Pas d'import en profondeur (`import x from 'features/collection/components/internal/...'` interdit, à enforcer par `eslint-plugin-boundaries` ou équivalent).
+- **Server state vs UI state** : ne jamais dupliquer la donnée Scryfall dans Zustand. Query est la source.
+
+### Code style & qualité
+- ESLint strict + `@typescript-eslint`, `eslint-plugin-react`, `eslint-plugin-jsx-a11y` (accessibilité), `eslint-plugin-import`.
+- Prettier non négociable. Pas de débat sur le formatage.
+- Conventional commits (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`, `perf:`, `a11y:`, `security:`).
+- PR template incluant : description, captures (mobile + desktop), checklist tests/a11y/perf/sécurité.
+- **Aucun `any` non justifié** par un commentaire `// eslint-disable-next-line @typescript-eslint/no-explicit-any -- raison`.
+- TODO interdits sans ticket associé (`// TODO(#123): ...`).
+
+### Versioning & migrations
+- Migrations IndexedDB versionnées via Dexie. Toute évolution de schéma = nouvelle version + script de migration testé.
+- Migrations base serveur : un outil (Prisma Migrate, Knex). Réversibilité documentée.
+
+---
+
+## 4. Tests unitaires — exigences
+
+- **TDD encouragé** sur la logique métier pure (parsing Scryfall, normalisation, calculs de valeur de collection, déduplication de cartes).
+- Tests obligatoires pour :
+  - Tout adaptateur TCG (`tcg/magic/*`, futur `tcg/pokemon/*`).
+  - Toute fonction de reconnaissance (mock du modèle, vérification du contrat de sortie).
+  - Tous les hooks personnalisés non triviaux.
+  - Tous les utilitaires de `shared/lib`.
+  - Toute migration Dexie.
+- **Tests de régression** : chaque bug corrigé arrive avec un test qui aurait failli avant le fix.
+- Mocks réseau via **MSW** (Mock Service Worker) — pas de `jest.mock('fetch')` brut.
+- Test data : factories typées (ex : `makeMagicCard({ name: 'Lightning Bolt' })`). Pas de fixtures JSON dispersées.
+- Tests rapides : suite unitaire complète sous **30 s** en local. Si elle dépasse, c'est un problème à traiter.
+- E2E : un parcours critique par sprint, au minimum :
+  1. Ajout manuel d'une carte à la collection.
+  2. Scan d'une carte → validation → ajout.
+  3. Recherche + filtrage.
+  4. Mode hors-ligne : ajout d'une carte, retour en ligne, sync.
+
+---
+
+## 5. Sécurité
+
+- **HTTPS partout**, HSTS activé, cookies `Secure` + `HttpOnly` + `SameSite=Lax` (ou `Strict` selon le flux).
+- **Pas de secrets côté client.** Les clés d'API tierces transitent par le backend.
+- **CSP stricte** : `default-src 'self'`, sources d'images autorisées explicitement (`img.scryfall.com`), pas de `unsafe-inline` ni `unsafe-eval` (sauf dérogation justifiée pour certains modèles ML, à isoler).
+- **Headers** : `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimale (caméra autorisée uniquement sur la route de scan).
+- **Validation** : Zod côté front ET côté back. Ne jamais faire confiance aux données client.
+- **Authentification** : tokens courts (≤ 1 h) + refresh token rotatif. Stockage : cookie HttpOnly côté backend custom ; en SPA pure si nécessaire, mémoire JS + refresh silencieux (jamais `localStorage` pour un token long).
+- **Autorisation** : un utilisateur ne peut accéder qu'à sa propre collection. Tests d'autorisation systématiques côté API (chaque endpoint, chaque ressource).
+- **Upload de photos** :
+  - Limite de taille (ex : 8 MB), validation MIME réelle (magic bytes), pas seulement l'extension.
+  - Re-encodage côté serveur (sharp) pour neutraliser les payloads malicieux.
+  - Suppression des EXIF avant stockage (vie privée : géolocalisation).
+- **Dépendances** : audit hebdomadaire (`npm audit`, Dependabot, Renovate). CVE haute = patch sous 7 jours.
+- **Logs** : ne jamais logger un token, un mot de passe, ou la photo brute. Logs structurés (pino) avec niveaux.
+- **Rate limiting** côté backend pour tous les endpoints sensibles (auth, upload).
+- **OWASP Top 10** revu à chaque PR touchant l'auth, les uploads ou les endpoints publics.
+- **RGPD** : politique de confidentialité accessible, export et suppression de compte fonctionnels (obligation légale UE).
+
+---
+
+## 6. Performances
+
+### Cibles mesurables (mobile 4G mid-range, type Moto G Power)
+- **LCP** ≤ 2,5 s
+- **INP** ≤ 200 ms
+- **CLS** ≤ 0,1
+- **TTI** ≤ 3,5 s
+- **Bundle JS initial** ≤ 200 KB gzippé (hors images).
+- **Lighthouse Performance** ≥ 90 sur la home et la liste de collection.
+
+### Pratiques obligatoires
+- **Code splitting** par route + par feature lourde (le scan ML est isolé et chargé à la demande).
+- **Images** : `srcset` + `sizes`, format AVIF/WebP avec fallback, `loading="lazy"`, dimensions explicites pour éviter le CLS.
+- **Liste de collection** : virtualisation (TanStack Virtual ou react-window) dès 100+ items.
+- **Service Worker** : cache des images Scryfall en stale-while-revalidate, cache des bundles en cache-first avec révision.
+- **Préchargement intelligent** : `<link rel="preload">` sur les fonts critiques uniquement.
+- **Fonts** : `font-display: swap`, sous-set, max 2 familles, max 2 graisses.
+- **Évitement du re-render** : `useMemo`/`useCallback` justifiés, `React.memo` sur les items de liste virtualisée.
+- **Web Workers** : tout traitement > 50 ms (parsing bulk data, OCR léger, calculs de stats sur grosses collections) part en worker.
+- **Mesure continue** : Web Vitals envoyés en RUM (Real User Monitoring), tableau de bord suivi à chaque release.
+- **Budget de performance** dans la CI : un PR qui dépasse le budget bundle est bloqué.
+
+---
+
+## 7. Accessibilité (a11y)
+
+Cible : **WCAG 2.2 niveau AA** au minimum.
+
+- **Sémantique HTML correcte** : `<button>` pour les actions, `<a>` pour les navigations, `<nav>`, `<main>`, `<header>`, `<footer>`. Pas de `<div onClick>`.
+- **Navigation au clavier** intégrale : tous les contrôles interactifs accessibles via Tab, focus visible (`:focus-visible`), ordre logique.
+- **Lecteurs d'écran** : labels explicites (`aria-label`, `aria-describedby`), états annoncés (`aria-live` sur les feedbacks de scan), images de cartes avec `alt` descriptif (`alt="Lightning Bolt, instant rouge, coût 1R"`).
+- **Contraste** : ratio ≥ 4,5:1 pour le texte normal, ≥ 3:1 pour le texte large et les composants UI. Vérification automatisée + manuelle.
+- **Tailles de cible tactile** : ≥ 44×44 px (Apple HIG) / ≥ 48×48 px (Material). Espacement entre cibles ≥ 8 px.
+- **Mouvement** : respect de `prefers-reduced-motion`. Pas d'animations infinies non décoratives.
+- **Couleur jamais seule porteuse d'info** : un statut "carte foil" doit avoir une icône ou un label, pas juste une teinte.
+- **Formulaires** : labels associés, messages d'erreur reliés (`aria-describedby`), erreurs annoncées (`aria-live="polite"`), suggestions de correction quand possible.
+- **Photos / scan** : alternative manuelle toujours disponible (saisie au clavier). La caméra n'est jamais le seul chemin.
+- **Tests** :
+  - Automatisés : `axe-core` via `@axe-core/playwright` sur les parcours E2E ; `eslint-plugin-jsx-a11y` en lint.
+  - Manuels : test au lecteur d'écran (VoiceOver iOS, TalkBack Android, NVDA Windows) sur les parcours critiques avant chaque release majeure.
+  - Test sans souris (clavier seul) à chaque PR de feature.
+- **Internationalisation** : `i18next` dès le départ. Pas de chaînes en dur. FR par défaut, EN cible court terme. `lang` correctement positionné sur `<html>` et sur les contenus mixtes (textes de cartes en EN dans une UI FR).
+
+---
+
+## 8. UX mobile-first (rappels au dev)
+
+- **Conception à 360 px de large d'abord**, puis tablette, puis desktop.
+- **Navigation principale en bas** (bottom tab bar) sur mobile. Pas de hamburger pour les fonctions principales.
+- **Gestes natifs** respectés : swipe, pull-to-refresh sur les listes, tap-and-hold pour actions secondaires.
+- **Pas de scroll horizontal** non intentionnel.
+- **Feedback immédiat** : skeleton screens (pas de spinners centrés à la 2010), états optimistes sur les actions courantes (ajout à la collection).
+- **Mode hors-ligne explicite** : bandeau, icône, message clair. Synchronisation visible quand on revient en ligne.
+- **Caméra** : déclenchement en un tap, prévisualisation, possibilité de re-shooter, mode lot avec indicateur de progression.
+- **Empty states** soignés : pas juste "Aucune carte". Suggérer l'action ("Ajouter votre première carte" + bouton).
+
+---
+
+## 9. Observabilité
+
+- **Logs structurés** côté backend (pino + niveau).
+- **Erreurs front** remontées (Sentry ou équivalent) avec source maps. Pas de PII dans les rapports d'erreur.
+- **Métriques** : Web Vitals, taux de succès du scan, latence Scryfall, taux d'erreur API.
+- **Feature flags** (Unleash, Flagsmith, ou maison simple) pour les fonctions à risque (nouveau modèle de reconnaissance, refonte UI).
+
+---
+
+## 10. Process & livraison
+
+- **Git** : trunk-based ou GitFlow simplifié. Branches courtes (≤ 3 jours). Pas de branches qui dérivent.
+- **CI** : lint + types + tests unitaires + build + audit deps + axe + Lighthouse CI sur chaque PR.
+- **CD** : déploiement automatique en preview pour chaque PR (Vercel, Netlify, ou équivalent).
+- **Releases** : SemVer. Changelog généré (Changesets ou Release Please).
+- **Documentation vivante** :
+  - `README.md` : démarrage en < 5 min.
+  - `ARCHITECTURE.md` : schéma + dépendances + décisions clés.
+  - `ADR/` (Architecture Decision Records) pour toute décision structurante (choix de Scryfall, choix du modèle OCR, choix de la PWA vs natif…).
+- **Onboarding** : un nouveau dev doit pouvoir lancer le projet, faire passer les tests et déployer une preview en 1 demi-journée.
+
+---
+
+## 11. Anti-patterns à proscrire
+
+- ❌ Logique métier dans `useEffect`.
+- ❌ Appels Scryfall sans cache, sans backoff, sans User-Agent.
+- ❌ Stocker des images de cartes en base64 dans IndexedDB (utiliser Blob).
+- ❌ Coupler Magic à l'UI ; toute string `"mtg"` ou `"magic"` dans un composant générique est un signal de design cassé.
+- ❌ Tests qui assertent des détails d'implémentation (snapshot d'un composant entier sans intention).
+- ❌ Skipper l'accessibilité "on verra plus tard". On ne refait jamais.
+- ❌ Désactiver une règle ESLint sans commentaire justificatif.
+- ❌ Ajouter une dépendance > 50 KB sans étude d'alternative.
+- ❌ Ignorer un warning React (clé manquante, hook conditionnel, etc.).
+
+---
+
+## 12. Critères "definition of done" pour chaque feature
+
+Une feature n'est livrée que si **toutes** ces cases sont cochées :
+
+- [ ] Specs fonctionnelles validées (parcours nominaux + cas d'erreur + cas hors-ligne).
+- [ ] Tests unitaires et d'intégration passent, couverture maintenue.
+- [ ] Test E2E sur le parcours critique si applicable.
+- [ ] Accessibilité vérifiée (axe + clavier + contraste).
+- [ ] Performance : pas de régression sur les Web Vitals, budget bundle respecté.
+- [ ] Sécurité : revue des entrées/sorties, autorisation testée.
+- [ ] i18n : toutes les chaînes externalisées.
+- [ ] Documentation à jour (README, ADR si décision structurante).
+- [ ] Testée en conditions réelles : mobile physique, mode hors-ligne, réseau lent (DevTools throttling 4G).
+- [ ] Revue par un pair.
+
+---
+
+## 13. Préparation à l'extension Pokémon
+
+Pour que l'ajout du TCG Pokémon (ou Yu-Gi-Oh!, Lorcana, etc.) reste un jeu d'enfant :
+
+- L'interface `TcgProvider` doit être stabilisée **avant** la fin du MVP Magic.
+- Les concepts spécifiques à Magic (couleurs WUBRG, mana cost, types Magic) ne doivent pas remonter dans le domaine partagé. Si un concept est commun (rareté, set, numéro), il vit dans `shared/domain` ; sinon, il reste dans `tcg/magic`.
+- Le composant `<CardDisplay>` reçoit un objet `Card` du domaine + un `renderer` fourni par l'adaptateur TCG. Pas de `if (game === 'magic')` dans l'UI partagée.
+- L'API backend doit accepter un paramètre `game` sur les endpoints de collection et de recherche dès le MVP, même si une seule valeur est supportée.
+- La base de données prévoit dès la première migration une colonne `game` (`'magic' | 'pokemon' | ...`) sur les tables `cards`, `collections_items`, etc.
+
+---
+
+## 14. Ce qui n'est pas négociable
+
+1. Mobile-first.
+2. Tests unitaires sur la logique métier.
+3. Accessibilité WCAG AA.
+4. HTTPS + CSP stricte.
+5. Pas de secrets côté client.
+6. Respect des conditions d'usage Scryfall.
+7. Architecture qui rend l'ajout d'un nouveau TCG additif, pas invasif.

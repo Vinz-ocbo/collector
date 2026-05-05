@@ -1,0 +1,6 @@
+dist
+coverage
+playwright-report
+node_modules
+*.md
+package-lock.json

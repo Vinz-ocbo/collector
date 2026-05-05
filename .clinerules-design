@@ -1,0 +1,397 @@
+# .clinerules — Concepteur UX/UI
+
+> Document de cadrage pour le designer en charge de l'application de gestion de collection de cartes (Magic, Pokémon, à terme autres TCG).
+> Complémentaire au `.clinerules` du développeur. À lire avant toute production de wireframe, maquette ou prototype.
+
+---
+
+## 1. Principes fondateurs
+
+### Mission produit
+Permettre à un collectionneur de **retrouver, organiser et valoriser** sa collection de cartes en un minimum de friction, depuis son téléphone, en mobilité, parfois hors-ligne, parfois à une main, parfois en magasin avec une pile de cartes à scanner.
+
+### Persona principal (à affiner avec recherche utilisateur)
+- **Le collectionneur-joueur** : 25–45 ans, possède 500 à 5 000 cartes, joue en Commander/Modern/Standard, achète régulièrement, revend parfois. Smartphone Android ou iPhone, usage en mobilité (boutique, tournoi, à table).
+- **Le pur collectionneur** : possède des cartes anciennes, soucieux de la valeur et de l'état, souvent en classeurs.
+- **Le débutant** : vient de recevoir un lot, veut savoir ce qu'il a et combien ça vaut.
+
+### Promesses UX non négociables
+1. **Vitesse d'ajout** : ajouter une carte connue prend moins de **10 secondes** depuis l'écran d'accueil (manuel ou scan).
+2. **Confiance** : l'utilisateur sait toujours ce qu'il possède, où, et dans quel état. Pas de doute, pas de double-saisie silencieuse.
+3. **Continuité** : ce qui marche en ligne marche hors-ligne, sans page d'erreur sèche.
+4. **Respect de l'attention** : pas de pop-up promotionnel, pas de gamification artificielle, pas d'urgence fabriquée.
+
+---
+
+## 2. Mobile-first, vraiment
+
+### Contraintes physiques à intégrer dès la wireframe
+- **Conception à 360 px de large d'abord.** Tablette et desktop sont des extensions, pas le point de départ.
+- **Zones de pouce** : les actions principales sont dans le tiers inférieur de l'écran. Le tiers supérieur est lecture seule sur mobile.
+- **Usage à une main** : un parent qui tient son enfant, un joueur qui tient une carte. Tester systématiquement à une main.
+- **Usage en mouvement** : transports, boutique, table de jeu. Cibles tactiles généreuses (≥ 44×44 px Apple, ≥ 48×48 px Material), espacement ≥ 8 px.
+- **Lumière variable** : forte en extérieur, faible en intérieur. Contraste élevé obligatoire, mode sombre dès le MVP.
+- **Caméra arrière par défaut** pour le scan, sans étape de switch manuel.
+
+### Navigation
+- **Bottom tab bar** sur mobile pour les sections principales. Maximum 5 onglets, idéalement 4.
+- **Pas de hamburger** pour les fonctions primaires. Le hamburger ne contient que des fonctions secondaires (paramètres, aide, déconnexion).
+- **Bouton d'action principal flottant** (FAB) ou central dans la tab bar pour "Ajouter une carte" — c'est l'action n°1 de l'app, elle doit être atteignable depuis n'importe où.
+- **Retour en arrière** : geste swipe (iOS), bouton système (Android), bouton in-app explicite. Jamais reposer uniquement sur le bouton navigateur.
+- **Breadcrumbs interdits sur mobile.** Sur desktop seulement, et uniquement si la profondeur dépasse 3 niveaux.
+
+### Sections types pour la tab bar (à ajuster avec le PO)
+1. **Collection** (par défaut, écran d'arrivée)
+2. **Recherche** (catalogue complet, ajout de cartes)
+3. **Scan** (CTA central, mis en avant)
+4. **Stats**
+5. **Profil / Paramètres**
+
+---
+
+## 3. Design system
+
+### Tokens à définir avant tout écran
+- **Couleurs** : palette neutre principale (gris/noir/blanc) + 1 accent + couleurs sémantiques (succès, alerte, erreur, info). Penser **mode clair ET mode sombre** ensemble, pas l'un puis l'autre.
+- **Typographie** : 1 famille, max 2. 5 niveaux de tailles maximum (caption / body / subtitle / title / display). Hauteurs de ligne définies.
+- **Espacements** : échelle géométrique (4, 8, 12, 16, 24, 32, 48, 64). Pas de valeurs arbitraires.
+- **Élévation** : 3 niveaux maximum (flat / raised / overlay). Pas d'inflation de shadows.
+- **Rayons** : 3 valeurs maximum (sm, md, lg). Cohérence absolue entre boutons/cartes/inputs.
+- **Iconographie** : une seule famille (Lucide, Material Symbols, Phosphor, etc.). Style cohérent (linéaire ou plein, pas mélangé).
+- **Animation** : durées courtes (120–250 ms standard, 350 ms max), easing standard (`ease-out` pour entrée, `ease-in` pour sortie). Respecter `prefers-reduced-motion` : tout doit fonctionner sans animation.
+
+### Composants de base (atomic design léger)
+À spécifier dans Figma comme composants réutilisables, avec variants et états (default / hover / active / focus / disabled / loading) :
+- Button (primary, secondary, tertiary, destructive, icon-only)
+- Input (text, search, number, password)
+- Select / Combobox
+- Checkbox, Radio, Switch
+- Card (élément de liste)
+- Badge / Tag (pour rareté, langue, foil, état)
+- Skeleton loader (par type de contenu)
+- Empty state (avec illustration sobre + CTA)
+- Toast / Snackbar
+- Modal / Bottom sheet
+- Tab bar
+- Filter chip
+
+### Gouvernance du design system
+- **Source unique** : un fichier Figma maître, versionné. Toute composante d'écran référence un composant publié.
+- **Tokens exportés en JSON** (Style Dictionary, Tokens Studio) pour synchronisation avec le code (Tailwind config).
+- **Toute exception est un signal**. Si un écran a besoin d'une couleur ou d'une taille hors système, soit on fait évoluer le système, soit on revoit l'écran. Pas de magic numbers en production.
+
+---
+
+## 4. Spécificités domaine : la carte de jeu
+
+### La carte est le héros visuel
+- **Image de carte = contenu, pas illustration.** Toujours haute fidélité, jamais déformée, jamais recadrée arbitrairement.
+- **Respect des images Scryfall** : pas de filtre, pas de désaturation, pas de blur, pas de watermark superposé. Le copyright et le nom de l'artiste restent visibles. Si l'art crop est utilisé, l'artiste est cité quelque part dans la même vue.
+- **Ratio des cartes Magic** : 63 × 88 mm, soit **environ 5:7** (≈ 0.714). Ne jamais étirer.
+- **Carte recto-verso** (transform, double-faced) : prévoir un bouton de retournement clair, animation de flip courte (≤ 300 ms).
+
+### Vues canoniques d'une carte
+
+**Vignette (liste / grille)**
+- Image à taille raisonnable (200–400 px de large), nom visible, badges essentiels (quantité, foil, état).
+- Lazy loading systématique. Skeleton à la place pendant le chargement.
+- Tap → vue détaillée. Long press → menu d'actions rapides (modifier, dupliquer, supprimer, déplacer).
+
+**Détail**
+- Image grande, zoomable (pinch / double-tap).
+- Métadonnées structurées : nom, mana cost, type, oracle text, P/T, set, numéro, rareté, artiste, prix estimé, langue, état, foil, quantité possédée.
+- Texte oracle lisible (16 px minimum). Symboles de mana en SVG natif, pas en images bitmap.
+- Actions principales accessibles sans scroll : ajouter à la collection / modifier l'exemplaire / partager.
+- Sections additionnelles plus bas : autres impressions du même nom, cartes liées, légalité par format, prix historique, rulings.
+
+**Affichages de collection**
+- Au moins **3 modes de vue** sélectionnables : liste compacte (densité maxi), grille avec image (par défaut sur mobile), pile (regroupement par nom avec quantités).
+- Tri : nom, set, date d'ajout, valeur, rareté, couleur. Mémoriser le dernier choix utilisateur.
+- Filtres en bottom sheet (mobile) ou panneau latéral (desktop). Filtres actifs visibles sous forme de chips supprimables.
+- État de chargement : skeleton respectant le mode de vue choisi, pas de spinner générique.
+
+### Information dense, hiérarchie claire
+Une fiche de carte peut afficher 20+ propriétés. **Hiérarchiser brutalement** :
+- Niveau 1 (toujours visible) : image, nom, set, numéro de collation, quantité possédée.
+- Niveau 2 (visible au scroll ou tap) : oracle text, type, mana cost, prix.
+- Niveau 3 (sur demande, accordéon ou onglet) : légalité, rulings, autres impressions, historique.
+
+---
+
+## 5. Parcours critiques à designer prioritairement
+
+### P1 — Ajout manuel d'une carte
+1. Tap FAB "Ajouter".
+2. Choix : "Saisir manuellement" ou "Photographier".
+3. Champ de recherche en autocomplete (focus auto, clavier ouvert).
+4. Liste de candidats avec mini-image, set, année.
+5. Sélection → écran de saisie : quantité (1 par défaut), foil (off par défaut), état (NM par défaut), langue (selon préférence utilisateur), classeur de destination.
+6. Validation → toast de confirmation + lien "Annuler" pendant 5 s.
+7. Retour automatique à la collection ou à l'écran d'ajout (selon mode "ajout en série").
+
+**Mode ajout en série** : après validation, le focus revient sur le champ de recherche, le clavier reste ouvert. Indispensable pour ajouter 50 cartes d'affilée.
+
+### P2 — Scan d'une carte unique
+1. Tap "Scan" (tab bar).
+2. Permission caméra demandée si première fois, avec explication claire de l'usage.
+3. Viseur centré, cadre indiquant la position attendue de la carte. Texte d'aide léger.
+4. Capture automatique dès que la carte est détectée et stable (1–2 s) OU bouton manuel.
+5. Écran de validation : image capturée + carte reconnue + score de confiance.
+6. Si confiance élevée (≥ 90 %) : pré-validation, l'utilisateur n'a qu'à confirmer.
+7. Si confiance moyenne : liste de 3–5 candidats, l'utilisateur choisit.
+8. Si échec : retour caméra ou bascule vers saisie manuelle (chemin de secours toujours visible).
+9. Métadonnées : état/foil/langue récupérés du dernier ajout par défaut, modifiables.
+
+### P3 — Scan d'un lot
+1. Mode "lot" activé depuis l'écran de scan.
+2. Compteur de cartes scannées en haut.
+3. Capture continue : chaque carte détectée et reconnue est ajoutée à une **file d'attente** (pas validée immédiatement).
+4. Vignette des cartes en attente accessible via bouton "X cartes en attente".
+5. À la fin : écran de revue de lot. Possibilité de corriger, supprimer, modifier une carte avant validation globale.
+6. Validation globale → ajout à la collection.
+7. Si interruption (appel, fermeture app) : la file est sauvegardée, reprise possible.
+
+### P4 — Recherche dans la collection
+- Barre de recherche persistante en haut.
+- Recherche instantanée (debounce 250 ms) sur nom, type, texte oracle.
+- Suggestions récentes au focus.
+- Résultats partagent les modes de vue de la collection.
+
+### P5 — Mode hors-ligne
+- Bandeau discret "Hors-ligne" en haut de l'écran (pas une modal bloquante).
+- Toutes les fonctions de consultation et d'ajout marchent.
+- Le scan local marche aussi (reconnaissance embarquée), avec indication "À synchroniser".
+- Cartes en attente de sync clairement marquées (icône cloud avec flèche).
+- Retour en ligne : sync silencieuse, toast discret de confirmation. Pas de pop-up modale.
+
+---
+
+## 6. Accessibilité (a11y) — standard WCAG 2.2 AA minimum
+
+### Contraste
+- Texte normal : ratio ≥ **4.5:1** sur fond.
+- Texte large (≥ 18 px ou ≥ 14 px gras) : ratio ≥ **3:1**.
+- Composants UI et icônes informatives : ratio ≥ **3:1**.
+- À vérifier sur **toutes** les paires fond/texte, en mode clair et sombre, sur les états (hover, disabled inclus pour disabled).
+
+### Focus visible
+- Indicateur de focus toujours visible au clavier (`:focus-visible`), distinct du hover.
+- Halo de focus respectant le contraste 3:1 avec le fond adjacent.
+- Ordre de tabulation logique, jamais décalé par CSS.
+
+### Cibles tactiles
+- Minimum 44×44 px (idéalement 48×48). Espacement ≥ 8 px entre cibles.
+- Les liens dans un texte courant peuvent être plus petits si suffisamment espacés.
+
+### Couleur jamais seule porteuse d'information
+- Statut "foil" : icône + label, pas juste un reflet.
+- Erreur de formulaire : icône + texte, pas juste du rouge.
+- Couleurs de mana Magic (W, U, B, R, G) : symbole + nom textuel accessible via `alt` ou `aria-label`.
+
+### Lecteurs d'écran
+- Chaque image de carte a un `alt` significatif : `"Lightning Bolt, instant rouge, coût 1R, possédé en 2 exemplaires NM"`.
+- Boutons icon-only : `aria-label` explicite (`"Ajouter une carte"`, pas `"+"`).
+- Mises à jour dynamiques (toast, résultat de scan) : `aria-live="polite"`.
+- Modales : focus piégé à l'intérieur, fermable avec Échap, focus restauré à la fermeture.
+- Skip link "Aller au contenu" sur desktop.
+
+### Sensibilités
+- `prefers-reduced-motion` : désactive les animations non essentielles, conserve les transitions de feedback (≤ 100 ms).
+- `prefers-color-scheme` : respecté par défaut, override possible dans les paramètres.
+- Pas de flash > 3 fois par seconde (risque épileptique).
+
+### Lisibilité
+- Texte resizable jusqu'à 200 % sans perte de fonctionnalité (pas de troncature destructrice).
+- Pas de `text-transform: uppercase` sur de longs textes (pénalise les dyslexiques).
+- Hauteur de ligne ≥ 1.5 pour le corps de texte.
+
+### Alternatives
+- Tout parcours impliquant la caméra a un équivalent **clavier-only** : la saisie manuelle est toujours accessible en 1 tap depuis l'écran de scan.
+- Le scan n'est jamais le seul chemin d'ajout.
+
+### Tests a11y attendus du designer
+- Vérifier le contraste dans Figma avec un plugin (Stark, Able, Contrast).
+- Annoter les ordres de focus et les `aria-label` directement dans les maquettes.
+- Tester chaque parcours avec lecteur d'écran avant validation finale (VoiceOver iOS minimum).
+
+---
+
+## 7. Performance perçue (responsabilité partagée avec le dev)
+
+Le designer a un rôle direct sur la **performance perçue**, distincte de la performance mesurée.
+
+### Skeletons, pas spinners
+- Un skeleton respecte la forme du contenu à venir (vignette de carte, ligne de texte, image carrée).
+- Pas de spinner centré qui occupe tout l'écran.
+- Skeletons qui pulsent doucement (animation lente, respect de `prefers-reduced-motion`).
+
+### États optimistes
+- Ajout d'une carte : la carte apparaît immédiatement dans la liste avec un état "en cours" léger, plutôt qu'un délai puis apparition.
+- Suppression : carte grisée + "Annuler" pendant 5 s, puis retrait définitif.
+
+### Préchargement intelligent
+- Les images de la première vue de la liste de collection sont préchargées en priorité.
+- Au scroll, préchargement anticipé de la viewport suivante.
+- Sur la fiche détail, préchargement des autres impressions seulement au scroll vers cette section.
+
+### Masquer la latence
+- Animations de transition entre écrans qui occupent les 200–300 ms de chargement.
+- Cache local des images visitées récemment.
+- Si une opération dépasse 1 s, feedback explicite (barre de progression, message). Au-delà de 5 s, possibilité d'annuler.
+
+### Tailles d'image adaptatives
+- Vignette de liste : version `small` ou `normal` Scryfall (≤ 100 KB).
+- Détail : version `large`, chargée seulement à l'ouverture.
+- Zoom : version `png` (full quality), chargée seulement sur action de zoom.
+
+---
+
+## 8. Internationalisation et localisation
+
+- **FR par défaut, EN au plus vite.** Maquettes systématiquement déclinées dans les deux langues pour valider que rien ne casse.
+- Le texte allemand peut être 30 % plus long que le français : prévoir des conteneurs souples, pas de largeurs fixes.
+- Cartes Magic : les noms et textes de cartes peuvent être en plusieurs langues. Distinguer clairement la **langue de l'UI** de la **langue de la carte** (un utilisateur FR peut posséder une carte JP).
+- Formats de date, nombres, devises : respecter la locale système.
+- Polices : la famille principale doit couvrir le latin étendu et idéalement diacritiques courants. Pour JP/CN/KR, fallback système accepté.
+- Symboles de mana, runes, glyphes spécifiques : SVG, indépendants de la police.
+
+---
+
+## 9. Modes et thèmes
+
+### Mode sombre dès le MVP
+Pas une option ajoutée plus tard. Le mode sombre est la norme pour beaucoup d'utilisateurs joueurs (sessions de jeu nocturnes, OLED). Concevoir les deux thèmes en parallèle.
+
+### Bonnes pratiques mode sombre
+- Pas de noir pur (`#000`) sauf cas spécifique (OLED maximal). Préférer `#0F0F12` à `#1A1A1F` pour les fonds.
+- Inverser la logique d'élévation : un élément "en avant" est **plus clair** que le fond, pas plus foncé.
+- Réduire la saturation des accents (les couleurs vives brûlent les yeux sur fond sombre).
+- Vérifier la lisibilité des images de cartes : les bords blancs des cartes Magic ressortent agressivement sur fond très sombre. Prévoir un fond intermédiaire pour les vignettes.
+
+### Préférence utilisateur
+- 3 options : Auto (système) / Clair / Sombre. Par défaut : Auto.
+
+---
+
+## 10. Émotion et personnalité
+
+### Ton
+- **Précis, sobre, complice.** L'utilisateur connaît son hobby, ne pas le prendre pour un débutant.
+- Pas de gamification artificielle (badges, niveaux, "streaks") — sauf si un vrai sens utilisateur émerge.
+- Pas de jargon marketing. "Votre collection" et non "Votre univers de cartes magiques".
+- Les messages d'erreur expliquent + proposent une action. "Impossible de reconnaître la carte. Essayez avec plus de lumière, ou saisissez le nom manuellement."
+
+### Empty states
+- Une illustration sobre, alignée sur le ton.
+- Un titre court ("Pas encore de cartes").
+- Une explication ("Ajoutez votre première carte pour démarrer votre collection").
+- Un CTA clair.
+
+### Micro-interactions
+- Le scan validé : un léger tick + son court (désactivable). Confirmation tactile (vibration courte) sur mobile.
+- L'ajout réussi : la nouvelle carte glisse en place dans la liste.
+- L'erreur : secousse douce du champ + message. Pas d'alerte modale sauf irrévocabilité (suppression définitive).
+
+### Ce qu'on évite
+- Les confettis pour célébrer un ajout banal.
+- Les modales de "tu es génial !" ou "+10 XP".
+- Les notifications push gratuites ("ça fait 3 jours qu'on s'est pas vus !").
+
+---
+
+## 11. Préparation à l'extension Pokémon (et autres TCG)
+
+L'app gère Magic au MVP, Pokémon ensuite. Le design ne doit pas devenir un mille-feuilles d'exceptions.
+
+### Ce qui est partagé (design system)
+- Tab bar, navigation, FAB d'ajout.
+- Tous les composants de base (Button, Input, Card, etc.).
+- Les vues de collection (liste, grille, pile) avec leurs filtres et tris.
+- Les parcours d'ajout, scan, recherche.
+- Les empty states génériques.
+- Le mode sombre, l'accessibilité, les animations.
+
+### Ce qui est spécifique au TCG
+- **Le rendu de la carte** : Magic et Pokémon n'ont pas le même ratio (Pokémon ≈ 0.72, proche), mais surtout pas les mêmes attributs (mana cost vs énergie, P/T vs HP, oracle text vs attaques).
+- Les **filtres avancés** (couleurs Magic vs types Pokémon).
+- Les **stats** (par couleur Magic, par type Pokémon).
+- Les **icônes de jeu** (symboles de mana, symboles d'énergie, symboles de set).
+
+### Règle d'or
+**Aucune string "Magic" ou "Pokémon" en dur dans un composant générique.** Si l'écran "Statistiques" affiche un graphique par couleur, ce graphique reçoit ses données et ses labels du module TCG actif. Quand on ajoutera Pokémon, on changera la source, pas le composant.
+
+### Sélecteur de TCG
+- Au MVP : invisible (Magic seul).
+- À l'arrivée de Pokémon : sélecteur clair en haut de la collection ou dans le profil. Possibilité de filtrer la collection sur un seul TCG ou de tout voir.
+- Une carte ajoutée hérite du TCG du contexte courant. Pas de menu déroulant à chaque ajout.
+
+---
+
+## 12. Livrables attendus du designer
+
+### Pour chaque écran ou parcours
+- Wireframe basse fidélité (validation de la logique).
+- Maquette haute fidélité en mode clair **et** sombre.
+- Déclinaison mobile (360 px), tablette (768 px), desktop (1280 px).
+- États : default, loading (skeleton), empty, error, success.
+- Annotations : composants utilisés, tokens, comportements interactifs, ordre de focus, labels accessibles.
+- Prototype cliquable pour les parcours critiques (scan, ajout en série, mode hors-ligne).
+
+### Pour le système
+- Bibliothèque Figma versionnée, composants publiés avec variants/états.
+- Tokens exportés en JSON, format compatible Tailwind / Style Dictionary.
+- Documentation du design system (guidelines d'usage de chaque composant).
+- Spécifications d'animation (durées, easing, propriétés animées).
+
+### Pour la collaboration
+- Handoff clair : Figma Dev Mode activé, mesures et tokens accessibles aux développeurs.
+- Présence aux refinements, dispo pour répondre aux questions d'implémentation.
+- Revue des PR front avec un œil sur la fidélité visuelle et l'a11y.
+
+---
+
+## 13. Anti-patterns à proscrire
+
+- ❌ Concevoir le desktop en premier puis "adapter au mobile".
+- ❌ Reprendre des patterns iOS sur Android ou inversement sans réflexion. Respecter les conventions de chaque plateforme tout en gardant une identité produit.
+- ❌ Multiplier les modales. Une modale = action irréversible ou critique.
+- ❌ Densité d'information excessive sur mobile. Un écran = un objectif principal.
+- ❌ Animations de plus de 350 ms qui retardent l'action de l'utilisateur.
+- ❌ Boutons de moins de 44×44 px, même si "ça rend mieux".
+- ❌ Texte sur image sans overlay pour garantir le contraste.
+- ❌ Couleurs hors palette pour "faire ressortir un élément".
+- ❌ Patterns sombres : faux compteurs, faux soldes, FOMO, désabonnement caché.
+- ❌ Notifications push promotionnelles. Push uniquement pour des événements vraiment utiles à l'utilisateur (synchronisation échouée, par exemple).
+- ❌ Caroussel d'onboarding de 8 écrans au premier lancement. Maximum 2–3 écrans, ou mieux : onboarding contextuel (tooltip à la première utilisation).
+
+---
+
+## 14. Critères "definition of done" pour chaque écran
+
+Une maquette est livrée seulement si **toutes** ces cases sont cochées :
+
+- [ ] Mobile 360 px conçu en premier, puis tablette et desktop.
+- [ ] Mode clair et mode sombre.
+- [ ] Tous les états : default, loading, empty, error, success.
+- [ ] Composants du design system utilisés (pas de variantes ad hoc).
+- [ ] Contraste vérifié sur toutes les paires (plugin Figma).
+- [ ] Cibles tactiles ≥ 44×44 px, espacement ≥ 8 px.
+- [ ] Ordre de focus annoté.
+- [ ] `aria-label` annotés sur les éléments non textuels.
+- [ ] Versions FR et EN testées (longueur de texte).
+- [ ] `prefers-reduced-motion` pris en compte si animations.
+- [ ] Parcours alternatif (clavier-only, sans caméra) prévu.
+- [ ] Revue avec un pair designer + un dev référent.
+- [ ] Testé en conditions réelles : maquette projetée sur un téléphone physique (Figma Mirror), au soleil, à une main.
+
+---
+
+## 15. Ce qui n'est pas négociable
+
+1. Mobile-first à 360 px.
+2. Mode sombre dès le MVP.
+3. Accessibilité WCAG 2.2 AA.
+4. Respect des règles d'usage des images Scryfall (pas d'altération, copyright préservé).
+5. Design system unique, tokens partagés avec le code.
+6. Aucune dépendance UI à un TCG spécifique dans les composants génériques.
+7. Aucun pattern sombre, aucune gamification artificielle, aucune notification non utile.

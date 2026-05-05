@@ -1,0 +1,33 @@
+node_modules
+dist
+dist-ssr
+coverage
+playwright-report
+test-results
+.vite
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS
+*.tmp
+
+# Claude Code — personal settings
+.claude/settings.local.json
