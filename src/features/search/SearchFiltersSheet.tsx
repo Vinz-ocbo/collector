@@ -107,9 +107,7 @@ export function SearchFiltersSheet({
                   key={s.code}
                   size="sm"
                   active
-                  onRemove={() =>
-                    setDraft((d) => ({ ...d, setCodes: toggle(d.setCodes, s.code) }))
-                  }
+                  onRemove={() => setDraft((d) => ({ ...d, setCodes: toggle(d.setCodes, s.code) }))}
                   removeLabel={t('search.filters.removeChip', { label: s.name })}
                 >
                   {s.name}

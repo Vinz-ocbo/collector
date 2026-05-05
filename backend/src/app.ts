@@ -12,14 +12,8 @@ import { ZodError } from 'zod';
 import type { Config } from './config.js';
 import { createDb, type Db, type DbHandle } from './db/index.js';
 import { createScryfallClient, type ScryfallClient } from './services/scryfall.js';
-import {
-  createBulkIngestService,
-  type BulkIngestService,
-} from './services/scryfall-bulk.js';
-import {
-  createCardsRepository,
-  type CardsRepository,
-} from './services/cards-repository.js';
+import { createBulkIngestService, type BulkIngestService } from './services/scryfall-bulk.js';
+import { createCardsRepository, type CardsRepository } from './services/cards-repository.js';
 import { healthRoutes } from './routes/health.js';
 import { buildCardsRoutes } from './routes/cards.js';
 import { buildSetsRoutes } from './routes/sets.js';
@@ -73,7 +67,11 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
           description: 'Scryfall proxy + future collection sync. Dev/staging only.',
           version: '0.1.0',
         },
-        servers: [{ url: `http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${String(config.PORT)}` }],
+        servers: [
+          {
+            url: `http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${String(config.PORT)}`,
+          },
+        ],
         tags: [
           { name: 'health', description: 'Liveness probe' },
           { name: 'cards', description: 'Card lookup and search (Scryfall proxy)' },
@@ -105,8 +103,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     return reply.code(status).send({
       statusCode: status,
       error: status >= 500 ? 'Internal Server Error' : 'Error',
-      message:
-        status >= 500 && config.NODE_ENV === 'production' ? 'Something went wrong' : message,
+      message: status >= 500 && config.NODE_ENV === 'production' ? 'Something went wrong' : message,
     });
   });
 
@@ -147,9 +144,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
         logger: fastify.log,
         userAgent: config.SCRYFALL_USER_AGENT,
       });
-    await fastify.register(
-      buildAdminRoutes({ ingest, adminToken: config.ADMIN_TOKEN }),
-    );
+    await fastify.register(buildAdminRoutes({ ingest, adminToken: config.ADMIN_TOKEN }));
   } else if (config.ADMIN_TOKEN && !db) {
     fastify.log.warn(
       'ADMIN_TOKEN is set but DATABASE_URL is not — admin routes will not be mounted',

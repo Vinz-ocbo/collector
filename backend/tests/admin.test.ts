@@ -2,10 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
-import {
-  ScryfallNotFoundError,
-  type ScryfallClient,
-} from '../src/services/scryfall.ts';
+import { ScryfallNotFoundError, type ScryfallClient } from '../src/services/scryfall.ts';
 import type { BulkIngestService } from '../src/services/scryfall-bulk.ts';
 
 function makeStubScryfall(): ScryfallClient {
@@ -21,12 +18,10 @@ function makeStubScryfall(): ScryfallClient {
 const stubIngest: BulkIngestService = {
   syncSets: vi.fn().mockResolvedValue({ upserted: 12, durationMs: 5 }),
   syncCards: vi.fn().mockResolvedValue({ processed: 1234, batches: 3, durationMs: 99 }),
-  syncAll: vi
-    .fn()
-    .mockResolvedValue({
-      sets: { upserted: 12, durationMs: 5 },
-      cards: { processed: 1234, batches: 3, durationMs: 99 },
-    }),
+  syncAll: vi.fn().mockResolvedValue({
+    sets: { upserted: 12, durationMs: 5 },
+    cards: { processed: 1234, batches: 3, durationMs: 99 },
+  }),
 };
 
 const ADMIN_TOKEN = 'test-token';

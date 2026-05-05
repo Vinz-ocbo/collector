@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  mapScryfallCardToInsert,
-  mapSetDtoToInsert,
-} from '../src/services/scryfall-bulk.ts';
+import { mapScryfallCardToInsert, mapSetDtoToInsert } from '../src/services/scryfall-bulk.ts';
 import type { ScryfallCard } from '../src/services/scryfall.ts';
 import type { SetDto } from '../src/schemas/sets.ts';
 

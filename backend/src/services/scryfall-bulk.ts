@@ -39,10 +39,7 @@ function getImageUris(card: ScryfallCard): ScryfallImageUris {
 }
 
 /** Pure mapper — exported for unit tests. */
-export function mapScryfallCardToInsert(
-  card: ScryfallCard,
-  now: Date = new Date(),
-): CardInsert {
+export function mapScryfallCardToInsert(card: ScryfallCard, now: Date = new Date()): CardInsert {
   const images = getImageUris(card);
   return {
     id: card.id,
@@ -225,7 +222,7 @@ export function createBulkIngestService(deps: BulkIngestDeps): BulkIngestService
       // (stream-json) so we never hold the whole text in memory — Node's max
       // string length (~512 MB) would otherwise blow up on response.json().
       const now = new Date();
-      const nodeStream = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
+      const nodeStream = Readable.fromWeb(response.body);
       const pipeline = nodeStream.pipe(withParserAsStream());
 
       let processed = 0;

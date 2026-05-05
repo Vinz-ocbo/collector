@@ -161,7 +161,9 @@
       "clearAll": "Clear all",
       "chipColor": "Color · {{count}}",
       "chipRarity": "Rarity · {{count}}",
-      "chipCondition": "Condition · {{count}}"
+      "chipCondition": "Condition · {{count}}",
+      "chipType": "Type · {{count}}",
+      "chipSet": "Set · {{count}}"
     },
     "sort": {
       "title": "Sort by",
@@ -360,6 +362,7 @@
       "title": "By rarity",
       "emptyTitle": "No distribution yet",
       "emptyDescription": "Add cards to see the rarity distribution.",
+      "legendHeading": "Legend",
       "valueHeading": "Value by rarity",
       "centerLabel": "cards",
       "unit": "€"
@@ -380,6 +383,11 @@
       "common": "Common",
       "special": "Special",
       "bonus": "Bonus"
+    },
+    "deeplink": {
+      "viewByColor": "View my {{label}} cards",
+      "viewByRarity": "View my {{label}} cards",
+      "viewByType": "View my {{label}} cards"
     }
   },
   "profile": {

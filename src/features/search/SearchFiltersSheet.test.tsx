@@ -53,15 +53,9 @@ describe('SearchFiltersSheet', () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
     const onOpenChange = vi.fn();
-    render(
-      <SearchFiltersSheet
-        open
-        onOpenChange={onOpenChange}
-        filter={{}}
-        onApply={onApply}
-      />,
-      { wrapper: Wrapper },
-    );
+    render(<SearchFiltersSheet open onOpenChange={onOpenChange} filter={{}} onApply={onApply} />, {
+      wrapper: Wrapper,
+    });
 
     await user.click(screen.getByRole('button', { name: /^Rouge$/i }));
     await user.click(screen.getByRole('button', { name: /^Appliquer$/i }));
@@ -90,10 +84,9 @@ describe('SearchFiltersSheet', () => {
   it('lists sets returned by the backend and lets the user toggle one', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(
-      <SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={onApply} />,
-      { wrapper: Wrapper },
-    );
+    render(<SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={onApply} />, {
+      wrapper: Wrapper,
+    });
 
     // Wait for sets list to load (TanStack Query is async even with mocked data)
     const setRow = await screen.findByRole('checkbox', { name: /Zendikar Rising/i });
@@ -104,10 +97,9 @@ describe('SearchFiltersSheet', () => {
 
   it('filters the set list by the search query', async () => {
     const user = userEvent.setup();
-    render(
-      <SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={vi.fn()} />,
-      { wrapper: Wrapper },
-    );
+    render(<SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={vi.fn()} />, {
+      wrapper: Wrapper,
+    });
 
     // Wait for sets list to populate
     await screen.findByRole('checkbox', { name: /Zendikar Rising/i });
@@ -123,10 +115,9 @@ describe('SearchFiltersSheet', () => {
   it('toggles the hideOwned switch', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(
-      <SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={onApply} />,
-      { wrapper: Wrapper },
-    );
+    render(<SearchFiltersSheet open onOpenChange={vi.fn()} filter={{}} onApply={onApply} />, {
+      wrapper: Wrapper,
+    });
 
     await user.click(screen.getByRole('switch', { name: /Masquer/i }));
     await user.click(screen.getByRole('button', { name: /^Appliquer$/i }));

@@ -211,9 +211,7 @@ describe('createScryfallSearchBackend.searchCards', () => {
 
 describe('createScryfallSearchBackend.getCardById', () => {
   it('returns the card on 200', async () => {
-    server.use(
-      http.get(`${BASE_URL}/v1/cards/card-1`, () => HttpResponse.json(sampleCard)),
-    );
+    server.use(http.get(`${BASE_URL}/v1/cards/card-1`, () => HttpResponse.json(sampleCard)));
 
     const backend = createScryfallSearchBackend({ baseUrl: BASE_URL });
     expect(await backend.getCardById('card-1')).toEqual(sampleCard);

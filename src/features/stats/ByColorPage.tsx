@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CardThumbnail, EmptyState, PageHeader, Skeleton } from '@/shared/ui';
 import { DonutChart } from './charts/DonutChart';
@@ -56,16 +56,34 @@ export function ByColorPage() {
           <ul className="divide-y divide-border rounded-lg border border-border bg-bg-raised">
             {data.map((row) => {
               const pct = total > 0 ? Math.round((row.count / total) * 100) : 0;
-              return (
-                <li key={row.bucket} className="flex items-center gap-3 p-3">
+              const colorLabel = t(`stats.colors.${row.bucket}`);
+              const rowContent = (
+                <>
                   <span
                     aria-hidden="true"
                     className="inline-block h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: row.color }}
                   />
-                  <span className="flex-1 truncate text-sm">{t(`stats.colors.${row.bucket}`)}</span>
+                  <span className="flex-1 truncate text-sm">{colorLabel}</span>
                   <span className="text-sm font-medium tabular-nums">{row.count}</span>
                   <span className="text-xs tabular-nums text-fg-muted">{pct}%</span>
+                </>
+              );
+              // Multi-colour bucket has no equivalent Collection filter — stay
+              // non-interactive for now. The 6 single colours deeplink.
+              return row.bucket === 'M' ? (
+                <li key={row.bucket} className="flex items-center gap-3 p-3">
+                  {rowContent}
+                </li>
+              ) : (
+                <li key={row.bucket}>
+                  <Link
+                    to={`/?colors=${row.bucket}`}
+                    className="flex items-center gap-3 p-3 hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-label={t('stats.deeplink.viewByColor', { label: colorLabel })}
+                  >
+                    {rowContent}
+                  </Link>
                 </li>
               );
             })}

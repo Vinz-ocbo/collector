@@ -45,6 +45,13 @@ export function ByTypePage() {
             value: row.count,
           }))}
           unit={t('stats.byType.unit')}
+          onSelect={(type) => {
+            // The 'Other' bucket aggregates everything that didn't match a
+            // primary type — there's no equivalent Collection filter, so we
+            // just stay on the page rather than producing a misleading deeplink.
+            if (type === 'Other') return;
+            navigate(`/?types=${encodeURIComponent(type)}`);
+          }}
         />
       </div>
     </>

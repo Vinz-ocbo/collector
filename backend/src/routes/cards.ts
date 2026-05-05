@@ -1,6 +1,11 @@
 import type { FastifyReply } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { cardIdParamSchema, cardSchema, searchQuerySchema, searchResultSchema } from '../schemas/cards.js';
+import {
+  cardIdParamSchema,
+  cardSchema,
+  searchQuerySchema,
+  searchResultSchema,
+} from '../schemas/cards.js';
 import {
   ScryfallNotFoundError,
   ScryfallUpstreamError,

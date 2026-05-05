@@ -18,6 +18,8 @@ export type ItemFilter = {
   conditions?: CollectionItem['condition'][] | undefined;
   foil?: 'all' | 'foil' | 'non-foil' | undefined;
   setCodes?: string[] | undefined;
+  /** Substring match on `meta.typeLine` — e.g. ["Creature","Land"]. */
+  types?: string[] | undefined;
 };
 
 export type ItemSort =
@@ -92,6 +94,11 @@ function matchesFilter(item: CollectionItemWithCard, filter: ItemFilter): boolea
       const hasMatch = cardColors.some((c) => filter.colors!.includes(c));
       if (!hasMatch) return false;
     }
+  }
+  if (filter.types?.length) {
+    const meta = item.card.meta as { typeLine?: string } | undefined;
+    const line = meta?.typeLine ?? '';
+    if (!filter.types.some((t) => line.includes(t))) return false;
   }
   if (filter.search) {
     const q = filter.search.toLowerCase();

@@ -53,9 +53,7 @@ if (typeof window !== 'undefined') {
   // Vaul reads style.transform / webkitTransform / mozTransform during drag;
   // jsdom returns undefined for the vendor-prefixed ones, which crashes Vaul
   // even when we never actually drag. Stub them to empty strings.
-  const styleProto = Object.getPrototypeOf(
-    document.documentElement.style,
-  ) as CSSStyleDeclaration;
+  const styleProto = Object.getPrototypeOf(document.documentElement.style) as CSSStyleDeclaration;
   for (const prop of ['webkitTransform', 'mozTransform'] as const) {
     if (!(prop in styleProto)) {
       Object.defineProperty(styleProto, prop, {

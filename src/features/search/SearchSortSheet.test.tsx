@@ -5,9 +5,7 @@ import { SearchSortSheet } from './SearchSortSheet';
 
 describe('SearchSortSheet', () => {
   it('marks the active option as checked', () => {
-    render(
-      <SearchSortSheet open onOpenChange={vi.fn()} value="price-desc" onChange={vi.fn()} />,
-    );
+    render(<SearchSortSheet open onOpenChange={vi.fn()} value="price-desc" onChange={vi.fn()} />);
     const option = screen.getByRole('radio', { name: /prix décroissant/i });
     expect(option).toHaveAttribute('aria-checked', 'true');
   });
@@ -17,12 +15,7 @@ describe('SearchSortSheet', () => {
     const onChange = vi.fn();
     const onOpenChange = vi.fn();
     render(
-      <SearchSortSheet
-        open
-        onOpenChange={onOpenChange}
-        value="relevance"
-        onChange={onChange}
-      />,
+      <SearchSortSheet open onOpenChange={onOpenChange} value="relevance" onChange={onChange} />,
     );
     await user.click(screen.getByRole('radio', { name: /Nom \(A→Z\)/i }));
     expect(onChange).toHaveBeenCalledWith('name-asc');

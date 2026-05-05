@@ -161,7 +161,9 @@
       "clearAll": "Tout effacer",
       "chipColor": "Couleur · {{count}}",
       "chipRarity": "Rareté · {{count}}",
-      "chipCondition": "État · {{count}}"
+      "chipCondition": "État · {{count}}",
+      "chipType": "Type · {{count}}",
+      "chipSet": "Édition · {{count}}"
     },
     "sort": {
       "title": "Trier par",
@@ -360,6 +362,7 @@
       "title": "Par rareté",
       "emptyTitle": "Pas encore de répartition",
       "emptyDescription": "Ajoutez des cartes pour voir la répartition par rareté.",
+      "legendHeading": "Légende",
       "valueHeading": "Valeur par rareté",
       "centerLabel": "cartes",
       "unit": "€"
@@ -380,6 +383,11 @@
       "common": "Common",
       "special": "Special",
       "bonus": "Bonus"
+    },
+    "deeplink": {
+      "viewByColor": "Voir mes cartes {{label}}",
+      "viewByRarity": "Voir mes cartes de rareté {{label}}",
+      "viewByType": "Voir mes cartes de type {{label}}"
     }
   },
   "profile": {

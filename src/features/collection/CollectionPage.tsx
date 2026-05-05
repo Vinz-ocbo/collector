@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowUpDown, Library, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Chip, EmptyState, PageHeader, Skeleton, useToast } from '@/shared/ui';
@@ -8,6 +9,7 @@ import { SortSheet } from './SortSheet';
 import { ViewModeSheet } from './ViewModeSheet';
 import { useCollectionItems, useSeedDemoData } from './hooks';
 import type { ItemFilter, ItemSort } from './repository';
+import { filterFromSearchParams, searchParamsFromFilter } from './urlFilters';
 
 const SORT_SHORT_KEYS: Record<
   ItemSort,
@@ -36,7 +38,14 @@ const VIEW_KEYS: Record<ViewMode, 'list' | 'grid' | 'stack'> = {
 
 type ChipDescriptor = {
   key: string;
-  labelKey: 'chipColor' | 'chipRarity' | 'chipCondition' | 'foilFoil' | 'foilNonFoil';
+  labelKey:
+    | 'chipColor'
+    | 'chipRarity'
+    | 'chipCondition'
+    | 'chipType'
+    | 'chipSet'
+    | 'foilFoil'
+    | 'foilNonFoil';
   count?: number;
   clear: () => ItemFilter;
 };
@@ -59,6 +68,22 @@ function activeFilterChips(filter: ItemFilter): ChipDescriptor[] {
       clear: () => ({ ...filter, rarities: undefined }),
     });
   }
+  if (filter.types?.length) {
+    chips.push({
+      key: 'types',
+      labelKey: 'chipType',
+      count: filter.types.length,
+      clear: () => ({ ...filter, types: undefined }),
+    });
+  }
+  if (filter.setCodes?.length) {
+    chips.push({
+      key: 'setCodes',
+      labelKey: 'chipSet',
+      count: filter.setCodes.length,
+      clear: () => ({ ...filter, setCodes: undefined }),
+    });
+  }
   if (filter.conditions?.length) {
     chips.push({
       key: 'conditions',
@@ -79,7 +104,18 @@ function activeFilterChips(filter: ItemFilter): ChipDescriptor[] {
 
 export function CollectionPage() {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<ItemFilter>({});
+  // URL search params are the source of truth for the filter so deeplinks
+  // (e.g. from the Stats pages: `/?colors=R`) land pre-filtered. Sort and
+  // view-mode stay in local state — they're personal preferences, not state
+  // we want to share via copy-paste.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = useMemo(() => filterFromSearchParams(searchParams), [searchParams]);
+  const setFilter = useCallback(
+    (next: ItemFilter) => {
+      setSearchParams(searchParamsFromFilter(next), { replace: true });
+    },
+    [setSearchParams],
+  );
   const [sort, setSort] = useState<ItemSort>('addedAt-desc');
   const [view, setView] = useState<ViewMode>('grid');
   const [filtersOpen, setFiltersOpen] = useState(false);

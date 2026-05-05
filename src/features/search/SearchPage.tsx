@@ -265,12 +265,7 @@ export function SearchPage() {
         filter={filter}
         onApply={setFilter}
       />
-      <SearchSortSheet
-        open={sortOpen}
-        onOpenChange={setSortOpen}
-        value={sort}
-        onChange={setSort}
-      />
+      <SearchSortSheet open={sortOpen} onOpenChange={setSortOpen} value={sort} onChange={setSort} />
     </>
   );
 }

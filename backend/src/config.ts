@@ -10,9 +10,7 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
-  LOG_LEVEL: z
-    .enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace'])
-    .default('info'),
+  LOG_LEVEL: z.enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   SCRYFALL_BASE_URL: z.string().url().default('https://api.scryfall.com'),
   SCRYFALL_USER_AGENT: z
     .string()

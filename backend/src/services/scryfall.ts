@@ -320,13 +320,7 @@ export function createScryfallClient(config: Config, logger: FastifyBaseLogger):
       const { page, limit } = input;
       const composedQuery = composeQuery(input);
       const { order, dir } = sortToScryfall(input.sort);
-      const cacheKey = [
-        composedQuery,
-        order,
-        dir ?? '',
-        String(page),
-        String(limit),
-      ].join('|');
+      const cacheKey = [composedQuery, order, dir ?? '', String(page), String(limit)].join('|');
       const cached = searchCache.get(cacheKey);
       if (cached) {
         logger.debug({ cacheKey }, 'scryfall search cache hit');

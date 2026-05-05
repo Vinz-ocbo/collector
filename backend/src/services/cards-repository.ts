@@ -123,8 +123,18 @@ export function createCardsRepository(db: Db): CardsRepository {
       })();
 
       const [{ total } = { total: 0 }, rows] = await Promise.all([
-        db.select({ total: count() }).from(cards).where(where).then((r) => r[0]),
-        db.select().from(cards).where(where).orderBy(...orderBy).limit(limit).offset(offset),
+        db
+          .select({ total: count() })
+          .from(cards)
+          .where(where)
+          .then((r) => r[0]),
+        db
+          .select()
+          .from(cards)
+          .where(where)
+          .orderBy(...orderBy)
+          .limit(limit)
+          .offset(offset),
       ]);
 
       const dto = rows.map(rowToDto);

@@ -2,10 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
-import {
-  ScryfallNotFoundError,
-  type ScryfallClient,
-} from '../src/services/scryfall.ts';
+import { ScryfallNotFoundError, type ScryfallClient } from '../src/services/scryfall.ts';
 
 function makeStubClient(): ScryfallClient {
   return {
