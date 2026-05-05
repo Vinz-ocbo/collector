@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronRight, Library } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AlertDialog, Button, Card, PageHeader } from '@/shared/ui';
 import { useSession, useSignOut } from '@/features/auth';
@@ -27,6 +28,20 @@ export function ProfilePage() {
         </Card>
 
         <LanguageSwitcher />
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-fg-muted">
+            {t('profile.collectionHeading')}
+          </h2>
+          <Link
+            to="/collection/binders"
+            className="flex items-center gap-3 rounded-md border border-border bg-bg-raised p-3 text-sm hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Library className="h-5 w-5 text-fg-muted" aria-hidden="true" />
+            <span className="flex-1 font-medium">{t('profile.bindersLink')}</span>
+            <ChevronRight className="h-4 w-4 text-fg-muted" aria-hidden="true" />
+          </Link>
+        </section>
 
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-fg-muted">

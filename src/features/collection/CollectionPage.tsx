@@ -8,6 +8,7 @@ import { FiltersSheet } from './FiltersSheet';
 import { SortSheet } from './SortSheet';
 import { ViewModeSheet } from './ViewModeSheet';
 import { ItemActionSheet } from './ItemActionSheet';
+import { MoveToBinderSheet } from './MoveToBinderSheet';
 import {
   useAddItem,
   useCollectionItems,
@@ -142,6 +143,7 @@ export function CollectionPage() {
   const [viewOpen, setViewOpen] = useState(false);
   const [menuItem, setMenuItem] = useState<CollectionItemWithCard | null>(null);
   const [deleteItemTarget, setDeleteItemTarget] = useState<CollectionItemWithCard | null>(null);
+  const [moveTarget, setMoveTarget] = useState<CollectionItemWithCard | null>(null);
   const navigate = useNavigate();
 
   const { data: items, isPending, isError } = useCollectionItems(filter, sort);
@@ -191,6 +193,11 @@ export function CollectionPage() {
       }),
       tone: 'success',
     });
+  };
+
+  const handleAskMove = (target: CollectionItemWithCard) => {
+    setMenuItem(null);
+    setMoveTarget(target);
   };
 
   const handleAskDelete = (target: CollectionItemWithCard) => {
@@ -337,7 +344,15 @@ export function CollectionPage() {
         }}
         onEdit={handleEdit}
         onDuplicate={(target) => void handleDuplicate(target)}
+        onMove={handleAskMove}
         onDelete={handleAskDelete}
+      />
+
+      <MoveToBinderSheet
+        item={moveTarget}
+        onOpenChange={(open) => {
+          if (!open) setMoveTarget(null);
+        }}
       />
 
       <AlertDialog

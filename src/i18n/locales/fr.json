@@ -154,6 +154,7 @@
       "title": "Actions",
       "description": "Que voulez-vous faire avec cet exemplaire ?",
       "duplicate": "Dupliquer",
+      "move": "Déplacer dans un classeur",
       "duplicatedToast": {
         "title": "Exemplaire dupliqué",
         "description": "Une copie de {{name}} a été ajoutée à votre collection."
@@ -164,6 +165,71 @@
       "deletedToast": {
         "title": "Exemplaire supprimé",
         "description": "{{name}} a été retirée de votre collection."
+      }
+    },
+    "move": {
+      "title": "Déplacer dans un classeur",
+      "description": "Choisissez la destination de cet exemplaire.",
+      "noneTitle": "Aucun classeur",
+      "noneDescription": "Créez un classeur depuis Profil → Classeurs.",
+      "toast": {
+        "title": "Exemplaire déplacé",
+        "description": "{{name}} → {{label}}"
+      }
+    },
+    "binders": {
+      "title": "Mes classeurs",
+      "create": "Nouveau classeur",
+      "createTitle": "Nouveau classeur",
+      "editTitle": "Modifier le classeur",
+      "virtualName": "Toutes mes cartes",
+      "itemSummary_one": "{{items}} carte · {{value}}",
+      "itemSummary_other": "{{items}} cartes · {{value}}",
+      "menuAria": "Actions sur {{name}}",
+      "menuTitle": "Actions",
+      "menuDescription": "Modifier ou supprimer ce classeur.",
+      "rename": "Renommer / Modifier",
+      "deleteTitle": "Supprimer ce classeur ?",
+      "deleteDescription_one": "{{name}} sera supprimé. {{count}} carte sera déplacée vers « Toutes mes cartes ».",
+      "deleteDescription_other": "{{name}} sera supprimé. {{count}} cartes seront déplacées vers « Toutes mes cartes ».",
+      "deleteConfirm": "Supprimer",
+      "deletedToast": {
+        "title": "Classeur supprimé",
+        "description_one": "{{name}} supprimé · {{count}} carte déplacée vers « Toutes mes cartes ».",
+        "description_other": "{{name}} supprimé · {{count}} cartes déplacées vers « Toutes mes cartes »."
+      },
+      "emptyTitle": "Pas encore de classeur",
+      "emptyDescription": "Regroupez vos cartes par deck, à vendre, à échanger, etc.",
+      "emptyHint": "Touchez « Nouveau classeur » pour commencer.",
+      "errorTitle": "Impossible de charger les classeurs",
+      "errorDescription": "Réessayez ou contactez le support si le problème persiste.",
+      "notFoundTitle": "Classeur introuvable",
+      "notFoundDescription": "Ce classeur a peut-être été supprimé.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Mon deck Mono-Rouge",
+      "nameRequired": "Le nom est obligatoire.",
+      "nameTooLong": "Le nom doit faire moins de {{max}} caractères.",
+      "nameDuplicate": "Un classeur porte déjà ce nom.",
+      "descriptionLabel": "Description (facultative)",
+      "descriptionPlaceholder": "Notes, contexte, contenu attendu…",
+      "iconLabel": "Icône",
+      "icons": {
+        "deck": "Deck",
+        "sale": "À vendre",
+        "wishlist": "Liste d’envie",
+        "trade": "À échanger",
+        "tournament": "Tournoi",
+        "collection": "Collection",
+        "cube": "Cube",
+        "sealed": "Scellé"
+      },
+      "createdToast": {
+        "title": "Classeur créé",
+        "description": "{{name}} ajouté à vos classeurs."
+      },
+      "updatedToast": {
+        "title": "Classeur modifié",
+        "description": "{{name}} mis à jour."
       }
     },
     "filters": {
@@ -458,6 +524,8 @@
   "profile": {
     "title": "Profil",
     "loggedInAs": "Connecté en tant que",
+    "collectionHeading": "Collection",
+    "bindersLink": "Mes classeurs",
     "applicationHeading": "Application",
     "applicationStub": "Données et mentions légales arriveront aux prochaines étapes.",
     "languageHeading": "Langue",

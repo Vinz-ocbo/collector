@@ -14,6 +14,15 @@ const ItemDetailPage = lazy(() =>
 const ItemEditPage = lazy(() =>
   import('@/features/collection').then((m) => ({ default: m.ItemEditPage })),
 );
+const BindersPage = lazy(() =>
+  import('@/features/collection').then((m) => ({ default: m.BindersPage })),
+);
+const BinderCreatePage = lazy(() =>
+  import('@/features/collection').then((m) => ({ default: m.BinderCreatePage })),
+);
+const BinderEditPage = lazy(() =>
+  import('@/features/collection').then((m) => ({ default: m.BinderEditPage })),
+);
 const SearchPage = lazy(() => import('@/features/search').then((m) => ({ default: m.SearchPage })));
 const CatalogCardDetailPage = lazy(() =>
   import('@/features/search').then((m) => ({ default: m.CatalogCardDetailPage })),
@@ -135,6 +144,30 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<RouteFallback />}>
                 <ItemEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'collection/binders',
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <BindersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'collection/binders/new',
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <BinderCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'collection/binders/:id/edit',
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <BinderEditPage />
               </Suspense>
             ),
           },

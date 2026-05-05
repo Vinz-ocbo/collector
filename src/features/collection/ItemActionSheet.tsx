@@ -1,4 +1,4 @@
-import { Copy, Pencil, Trash2 } from 'lucide-react';
+import { Copy, FolderInput, Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/shared/ui';
 import type { CollectionItemWithCard } from './repository';
@@ -8,6 +8,7 @@ export type ItemActionSheetProps = {
   onOpenChange: (open: boolean) => void;
   onEdit: (item: CollectionItemWithCard) => void;
   onDuplicate: (item: CollectionItemWithCard) => void;
+  onMove: (item: CollectionItemWithCard) => void;
   onDelete: (item: CollectionItemWithCard) => void;
 };
 
@@ -16,6 +17,7 @@ export function ItemActionSheet({
   onOpenChange,
   onEdit,
   onDuplicate,
+  onMove,
   onDelete,
 }: ItemActionSheetProps) {
   const { t } = useTranslation();
@@ -39,6 +41,11 @@ export function ItemActionSheet({
             icon={<Copy className="h-4 w-4" aria-hidden="true" />}
             label={t('collection.itemMenu.duplicate')}
             onClick={() => onDuplicate(item)}
+          />
+          <ActionButton
+            icon={<FolderInput className="h-4 w-4" aria-hidden="true" />}
+            label={t('collection.itemMenu.move')}
+            onClick={() => onMove(item)}
           />
           <ActionButton
             icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}

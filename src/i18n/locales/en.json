@@ -154,6 +154,7 @@
       "title": "Actions",
       "description": "What would you like to do with this copy?",
       "duplicate": "Duplicate",
+      "move": "Move to a binder",
       "duplicatedToast": {
         "title": "Copy duplicated",
         "description": "A copy of {{name}} was added to your collection."
@@ -164,6 +165,71 @@
       "deletedToast": {
         "title": "Copy deleted",
         "description": "{{name}} was removed from your collection."
+      }
+    },
+    "move": {
+      "title": "Move to a binder",
+      "description": "Pick a destination for this copy.",
+      "noneTitle": "No binder yet",
+      "noneDescription": "Create a binder from Profile → My binders.",
+      "toast": {
+        "title": "Copy moved",
+        "description": "{{name}} → {{label}}"
+      }
+    },
+    "binders": {
+      "title": "My binders",
+      "create": "New binder",
+      "createTitle": "New binder",
+      "editTitle": "Edit binder",
+      "virtualName": "All my cards",
+      "itemSummary_one": "{{items}} card · {{value}}",
+      "itemSummary_other": "{{items}} cards · {{value}}",
+      "menuAria": "Actions on {{name}}",
+      "menuTitle": "Actions",
+      "menuDescription": "Edit or delete this binder.",
+      "rename": "Rename / Edit",
+      "deleteTitle": "Delete this binder?",
+      "deleteDescription_one": "{{name}} will be deleted. {{count}} card will move to “All my cards”.",
+      "deleteDescription_other": "{{name}} will be deleted. {{count}} cards will move to “All my cards”.",
+      "deleteConfirm": "Delete",
+      "deletedToast": {
+        "title": "Binder deleted",
+        "description_one": "{{name}} deleted · {{count}} card moved to “All my cards”.",
+        "description_other": "{{name}} deleted · {{count}} cards moved to “All my cards”."
+      },
+      "emptyTitle": "No binder yet",
+      "emptyDescription": "Group your cards by deck, for sale, to trade, etc.",
+      "emptyHint": "Tap “New binder” to start.",
+      "errorTitle": "Couldn’t load binders",
+      "errorDescription": "Try again or contact support if the problem persists.",
+      "notFoundTitle": "Binder not found",
+      "notFoundDescription": "This binder may have been deleted.",
+      "nameLabel": "Name",
+      "namePlaceholder": "My Mono-Red deck",
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name must be under {{max}} characters.",
+      "nameDuplicate": "A binder with this name already exists.",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Notes, context, expected contents…",
+      "iconLabel": "Icon",
+      "icons": {
+        "deck": "Deck",
+        "sale": "For sale",
+        "wishlist": "Wishlist",
+        "trade": "To trade",
+        "tournament": "Tournament",
+        "collection": "Collection",
+        "cube": "Cube",
+        "sealed": "Sealed"
+      },
+      "createdToast": {
+        "title": "Binder created",
+        "description": "{{name}} added to your binders."
+      },
+      "updatedToast": {
+        "title": "Binder updated",
+        "description": "{{name}} updated."
       }
     },
     "filters": {
@@ -458,6 +524,8 @@
   "profile": {
     "title": "Profile",
     "loggedInAs": "Signed in as",
+    "collectionHeading": "Collection",
+    "bindersLink": "My binders",
     "applicationHeading": "Application",
     "applicationStub": "Data and legal info will arrive in upcoming steps.",
     "languageHeading": "Language",

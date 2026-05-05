@@ -2,19 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addItem,
   createBinder,
+  deleteBinder,
   deleteItem,
+  getBinder,
   getItem,
   getOwnedCountByCardId,
   getSummary,
+  listBinderSummaries,
   listBinders,
   listItems,
   seedDemoData,
+  updateBinder,
   updateItem,
   type AddItemInput,
+  type BinderSummary,
   type CollectionItemWithCard,
   type CollectionSummary,
   type ItemFilter,
   type ItemSort,
+  type UpdateBinderInput,
   type UpdateItemInput,
 } from './repository';
 import type { Binder } from '@/shared/domain';
@@ -30,6 +36,8 @@ const KEYS = {
   item: (id: string) => ['collection', 'item', id] as const,
   summary: () => ['collection', 'summary'] as const,
   binders: () => ['collection', 'binders'] as const,
+  binderSummaries: () => ['collection', 'binderSummaries'] as const,
+  binder: (id: string) => ['collection', 'binder', id] as const,
   ownedCounts: () => ['collection', 'ownedCounts'] as const,
   viewPrefs: () => ['collection', 'viewPrefs'] as const,
 };
@@ -60,6 +68,21 @@ export function useBinders() {
   return useQuery<Binder[]>({
     queryKey: KEYS.binders(),
     queryFn: () => listBinders(),
+  });
+}
+
+export function useBinder(id: string | undefined) {
+  return useQuery<Binder | null>({
+    queryKey: id ? KEYS.binder(id) : ['collection', 'binder', null],
+    queryFn: () => (id ? getBinder(id) : Promise.resolve(null)),
+    enabled: !!id,
+  });
+}
+
+export function useBinderSummaries() {
+  return useQuery<BinderSummary[]>({
+    queryKey: KEYS.binderSummaries(),
+    queryFn: () => listBinderSummaries(),
   });
 }
 
@@ -112,6 +135,22 @@ export function useCreateBinder() {
         position: 0,
         ...(description ? { description } : {}),
       }),
+    onSuccess: () => invalidateCollection(qc),
+  });
+}
+
+export function useUpdateBinder() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { id: string; patch: UpdateBinderInput }>({
+    mutationFn: ({ id, patch }) => updateBinder(id, patch),
+    onSuccess: () => invalidateCollection(qc),
+  });
+}
+
+export function useDeleteBinder() {
+  const qc = useQueryClient();
+  return useMutation<{ orphaned: number }, Error, { id: string }>({
+    mutationFn: ({ id }) => deleteBinder(id),
     onSuccess: () => invalidateCollection(qc),
   });
 }

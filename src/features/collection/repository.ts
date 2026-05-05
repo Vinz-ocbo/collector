@@ -215,6 +215,77 @@ export async function createBinder(
   return id;
 }
 
+export async function getBinder(id: string): Promise<Binder | null> {
+  return (await db.binders.get(id)) ?? null;
+}
+
+export type UpdateBinderInput = {
+  name?: string | undefined;
+  description?: string | undefined;
+  icon?: string | undefined;
+  position?: number | undefined;
+};
+
+export async function updateBinder(id: string, patch: UpdateBinderInput): Promise<void> {
+  const existing = await db.binders.get(id);
+  if (!existing) throw new Error(`Binder ${id} not found`);
+  const next: Binder = {
+    ...existing,
+    ...(patch.name !== undefined ? { name: patch.name } : {}),
+    ...(patch.description !== undefined ? { description: patch.description } : {}),
+    ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
+    ...(patch.position !== undefined ? { position: patch.position } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+  await db.binders.put(next);
+}
+
+/**
+ * Deletes a binder and orphans every item that referenced it (sets
+ * `binderId` to null). The cards stay in the user's collection — only the
+ * grouping disappears, per design spec #14.
+ */
+export async function deleteBinder(id: string): Promise<{ orphaned: number }> {
+  return db.transaction('rw', db.binders, db.items, async () => {
+    const orphans = await db.items.where('binderId').equals(id).toArray();
+    const now = new Date().toISOString();
+    for (const item of orphans) {
+      await db.items.update(item.id, { binderId: null, updatedAt: now, syncStatus: 'pending' });
+    }
+    await db.binders.delete(id);
+    return { orphaned: orphans.length };
+  });
+}
+
+export type BinderSummary = {
+  binder: Binder;
+  itemCount: number;
+  totalQuantity: number;
+  totalValueEur: number;
+};
+
+/**
+ * Returns one row per binder with quick aggregates over its items. Used by
+ * the binder list page so each row can show "X cartes · Y €".
+ */
+export async function listBinderSummaries(): Promise<BinderSummary[]> {
+  const [binders, items, cards] = await Promise.all([
+    db.binders.orderBy('position').toArray(),
+    db.items.toArray(),
+    db.cards.toArray(),
+  ]);
+  const cardsById = new Map(cards.map((c) => [c.id, c]));
+  return binders.map((binder) => {
+    const owned = items.filter((i) => i.binderId === binder.id);
+    const totalQuantity = owned.reduce((sum, i) => sum + i.quantity, 0);
+    const totalValueEur = owned.reduce(
+      (sum, i) => sum + (cardsById.get(i.cardId)?.prices.eur ?? 0) * i.quantity,
+      0,
+    );
+    return { binder, itemCount: owned.length, totalQuantity, totalValueEur };
+  });
+}
+
 export type CollectionSummary = {
   totalQuantity: number;
   uniqueCards: number;

@@ -4,12 +4,15 @@ import { db } from '@/shared/db';
 import {
   addItem,
   createBinder,
+  deleteBinder,
   deleteItem,
   getItem,
   getSummary,
+  listBinderSummaries,
   listBinders,
   listItems,
   seedDemoData,
+  updateBinder,
   updateItem,
   upsertCards,
 } from './repository';
@@ -164,5 +167,58 @@ describe('collection repository', () => {
     const list = await listBinders();
     expect(list).toHaveLength(1);
     expect(list[0]!.id).toBe(id);
+  });
+
+  it('updates a binder', async () => {
+    const id = await createBinder({ name: 'Old', icon: 'deck', position: 0 });
+    await updateBinder(id, { name: 'New', description: 'Notes' });
+    const list = await listBinders();
+    expect(list[0]!.name).toBe('New');
+    expect(list[0]!.description).toBe('Notes');
+  });
+
+  it('deletes a binder and orphans its items (binderId becomes null)', async () => {
+    const cards = buildSeedCards();
+    await upsertCards(cards);
+    const card = cards[0]!;
+    const binderId = await createBinder({ name: 'Trade', icon: 'trade', position: 0 });
+    await addItem({
+      cardId: card.id,
+      game: 'magic',
+      quantity: 1,
+      condition: 'NM',
+      foil: false,
+      language: 'en',
+      binderId,
+    });
+
+    const result = await deleteBinder(binderId);
+    expect(result.orphaned).toBe(1);
+
+    expect(await listBinders()).toHaveLength(0);
+    const items = await listItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]!.binderId).toBeNull();
+  });
+
+  it('summarizes binders with item count and total value', async () => {
+    const cards = buildSeedCards();
+    await upsertCards(cards);
+    const card = cards[0]!;
+    const binderId = await createBinder({ name: 'Cube', icon: 'cube', position: 0 });
+    await addItem({
+      cardId: card.id,
+      game: 'magic',
+      quantity: 3,
+      condition: 'NM',
+      foil: false,
+      language: 'en',
+      binderId,
+    });
+    const summaries = await listBinderSummaries();
+    expect(summaries).toHaveLength(1);
+    expect(summaries[0]!.binder.id).toBe(binderId);
+    expect(summaries[0]!.totalQuantity).toBe(3);
+    expect(summaries[0]!.itemCount).toBe(1);
   });
 });
