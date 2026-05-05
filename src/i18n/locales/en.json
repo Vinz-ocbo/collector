@@ -29,6 +29,12 @@
   "appGate": {
     "loading": "Loading…"
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "The app hit an unexpected error. You can retry or reload.",
+    "retry": "Retry",
+    "reload": "Reload app"
+  },
   "notFound": {
     "title": "Page not found",
     "description": "This card is no longer in the deck."
