@@ -1,12 +1,24 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Library, Plus, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AlertDialog, Button, Chip, EmptyState, FAB, PageHeader, Skeleton, useToast } from '@/shared/ui';
+import {
+  AlertDialog,
+  Button,
+  Chip,
+  EmptyState,
+  FAB,
+  PageHeader,
+  PullToRefresh,
+  Skeleton,
+  useToast,
+} from '@/shared/ui';
 import { CollectionList, type ViewMode } from './CollectionList';
 import { FiltersSheet } from './FiltersSheet';
 import { SortSheet } from './SortSheet';
 import { ViewModeSheet } from './ViewModeSheet';
+import { BinderHeader } from './BinderHeader';
 import { ItemActionSheet } from './ItemActionSheet';
 import { MoveToBinderSheet } from './MoveToBinderSheet';
 import {
@@ -113,7 +125,7 @@ function activeFilterChips(filter: ItemFilter): ChipDescriptor[] {
 }
 
 export function CollectionPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // URL search params are the source of truth for the filter so deeplinks
   // (e.g. from the Stats pages: `/?colors=R`) land pre-filtered. Sort and
   // view-mode stay in local state — they're personal preferences, not state
@@ -151,6 +163,18 @@ export function CollectionPage() {
   const addItem = useAddItem();
   const deleteItem = useDeleteItem();
   const { show } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => {
+    // Invalidate Collection (local Dexie reads, cheap) and the catalog
+    // queries that may have stale prices. The user's mutations have already
+    // been committed locally, so this is mostly a "pull the latest cache"
+    // gesture; price refresh from Scryfall will land here when we add it.
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['collection'] }),
+      queryClient.invalidateQueries({ queryKey: ['search'] }),
+    ]);
+  }, [queryClient]);
 
   const activeChips = useMemo(() => activeFilterChips(filter), [filter]);
 
@@ -219,14 +243,43 @@ export function CollectionPage() {
     });
   };
 
+  // When the deeplink targets a specific binder, swap the generic Collection
+  // header for a binder-aware one (icon + name + back-to-binders + kebab
+  // actions). Items not in any binder (`binderId === null`) keep the generic
+  // header — that case is "Toutes mes cartes hors classeur" and doesn't need
+  // a header dedicated to a single binder entity.
+  const binderId = typeof filter.binderId === 'string' ? filter.binderId : null;
+  const binderTotalQuantity = useMemo(
+    () => (items ? items.reduce((sum, item) => sum + item.quantity, 0) : 0),
+    [items],
+  );
+  const binderTotalValueEur = useMemo(
+    () =>
+      items
+        ? items.reduce((sum, item) => sum + (item.card.prices.eur ?? 0) * item.quantity, 0)
+        : 0,
+    [items],
+  );
+
   return (
     <>
-      <PageHeader
-        title={
-          items ? t('collection.titleWithCount', { count: items.length }) : t('collection.title')
-        }
-        sticky={false}
-      />
+      <PullToRefresh onRefresh={handleRefresh} label={t('collection.pullToRefresh')}>
+      {binderId ? (
+        <BinderHeader
+          binderId={binderId}
+          itemCount={binderTotalQuantity}
+          totalValueEur={binderTotalValueEur}
+          locale={i18n.language}
+          onAfterDelete={() => navigate('/collection/binders', { replace: true })}
+        />
+      ) : (
+        <PageHeader
+          title={
+            items ? t('collection.titleWithCount', { count: items.length }) : t('collection.title')
+          }
+          sticky={false}
+        />
+      )}
 
       <div className="flex flex-wrap items-center gap-2 px-3 py-2">
         <button
@@ -323,6 +376,7 @@ export function CollectionPage() {
       ) : (
         <CollectionList items={items} mode={view} onItemMenu={setMenuItem} />
       )}
+      </PullToRefresh>
 
       <FiltersSheet
         open={filtersOpen}

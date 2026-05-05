@@ -66,6 +66,9 @@
 
   body {
     @apply bg-bg font-sans text-fg antialiased;
+    /* Disable native pull-to-refresh so our custom one (used on Collection)
+       isn't fighting the browser's reload gesture on mobile. */
+    overscroll-behavior-y: contain;
   }
 
   *:focus-visible {

@@ -130,6 +130,7 @@
     "title": "Ma collection",
     "titleWithCount": "Ma collection ({{count}})",
     "fabAddLabel": "Ajouter une carte",
+    "pullToRefresh": "Tirer pour rafraîchir",
     "empty": {
       "title": "Pas encore de cartes",
       "description": "Touchez le bouton + pour ajouter votre première carte, ou chargez un jeu de démo pour explorer l’interface.",

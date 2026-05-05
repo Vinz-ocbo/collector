@@ -130,6 +130,7 @@
     "title": "My collection",
     "titleWithCount": "My collection ({{count}})",
     "fabAddLabel": "Add a card",
+    "pullToRefresh": "Pull to refresh",
     "empty": {
       "title": "No cards yet",
       "description": "Tap the + button to add your first card, or load a demo set to explore the UI.",
