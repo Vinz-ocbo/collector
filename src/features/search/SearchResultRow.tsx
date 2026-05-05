@@ -7,20 +7,23 @@ import type { Card } from '@/shared/domain';
 export type SearchResultRowProps = {
   card: Card;
   ownedCount?: number | undefined;
+  /**
+   * When provided, the row renders as a button that calls `onSelect(card)`
+   * instead of navigating to the card detail. Used by the add-manual flow
+   * to open the AddToCollectionSheet inline.
+   */
+  onSelect?: (card: Card) => void;
 };
 
-export function SearchResultRow({ card, ownedCount }: SearchResultRowProps) {
+export function SearchResultRow({ card, ownedCount, onSelect }: SearchResultRowProps) {
   const { t, i18n } = useTranslation();
   const meta = card.meta as { typeLine?: string } | undefined;
   const price = card.prices.eur;
 
-  return (
-    <Link
-      to={`/search/cards/${card.id}`}
-      className="group flex items-center gap-3 rounded-md p-2 hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-    >
+  const inner = (
+    <>
       <CardThumbnail card={card} size="sm" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-medium">{card.name}</p>
         <p className="truncate text-xs text-fg-muted">
           {card.setName} ({card.setCode}) · {card.rarity}
@@ -38,6 +41,23 @@ export function SearchResultRow({ card, ownedCount }: SearchResultRowProps) {
           <Check className="h-3 w-3" aria-hidden="true" />×{ownedCount}
         </span>
       ) : null}
+    </>
+  );
+
+  const className =
+    'group flex w-full items-center gap-3 rounded-md p-2 hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+
+  if (onSelect) {
+    return (
+      <button type="button" onClick={() => onSelect(card)} className={className}>
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link to={`/search/cards/${card.id}`} className={className}>
+      {inner}
     </Link>
   );
 }

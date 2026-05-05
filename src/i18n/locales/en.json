@@ -129,9 +129,10 @@
   "collection": {
     "title": "My collection",
     "titleWithCount": "My collection ({{count}})",
+    "fabAddLabel": "Add a card",
     "empty": {
       "title": "No cards yet",
-      "description": "Manual add and scan are coming soon. In the meantime, load a demo set to explore the UI.",
+      "description": "Tap the + button to add your first card, or load a demo set to explore the UI.",
       "loadDemo": "Load a demo set",
       "loadingDemo": "Loading…",
       "demoLoaded": {
@@ -406,6 +407,16 @@
       "viewByRarity": "View my {{label}} cards",
       "viewByType": "View my {{label}} cards",
       "viewBySet": "View my {{label}} cards"
+    }
+  },
+  "add": {
+    "manual": {
+      "title": "Add a card",
+      "formLabel": "Catalog search for the add flow",
+      "ariaLabel": "Search the catalog",
+      "placeholder": "Card name…",
+      "promptTitle": "Find your card",
+      "promptDescription": "Type at least 2 characters to search the catalog."
     }
   },
   "profile": {

@@ -1,0 +1,1 @@
+export { AddManualPage } from './AddManualPage';

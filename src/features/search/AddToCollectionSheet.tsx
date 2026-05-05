@@ -19,9 +19,19 @@ export type AddToCollectionSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   card: Card;
+  /**
+   * Called after the item has been successfully added and the sheet has been
+   * closed. Used by the add-manual flow to redirect back to the Collection.
+   */
+  onAdded?: () => void;
 };
 
-export function AddToCollectionSheet({ open, onOpenChange, card }: AddToCollectionSheetProps) {
+export function AddToCollectionSheet({
+  open,
+  onOpenChange,
+  card,
+  onAdded,
+}: AddToCollectionSheetProps) {
   const { t } = useTranslation();
   const { show } = useToast();
   const addItem = useAddItem();
@@ -57,6 +67,7 @@ export function AddToCollectionSheet({ open, onOpenChange, card }: AddToCollecti
     onOpenChange(false);
     setQuantity(1);
     setNotes('');
+    onAdded?.();
   }
 
   return (

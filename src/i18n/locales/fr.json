@@ -129,9 +129,10 @@
   "collection": {
     "title": "Ma collection",
     "titleWithCount": "Ma collection ({{count}})",
+    "fabAddLabel": "Ajouter une carte",
     "empty": {
       "title": "Pas encore de cartes",
-      "description": "L’ajout par recherche et le scan arriveront aux prochaines étapes. En attendant, chargez un jeu de démo pour explorer l’interface.",
+      "description": "Touchez le bouton + pour ajouter votre première carte, ou chargez un jeu de démo pour explorer l’interface.",
       "loadDemo": "Charger un jeu de démo",
       "loadingDemo": "Chargement…",
       "demoLoaded": {
@@ -406,6 +407,16 @@
       "viewByRarity": "Voir mes cartes de rareté {{label}}",
       "viewByType": "Voir mes cartes de type {{label}}",
       "viewBySet": "Voir mes cartes du set {{label}}"
+    }
+  },
+  "add": {
+    "manual": {
+      "title": "Ajouter une carte",
+      "formLabel": "Recherche du catalogue pour l’ajout",
+      "ariaLabel": "Rechercher dans le catalogue",
+      "placeholder": "Nom de la carte…",
+      "promptTitle": "Trouvez votre carte",
+      "promptDescription": "Tapez au moins 2 caractères pour rechercher dans le catalogue."
     }
   },
   "profile": {

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { ArrowUpDown, Library, SlidersHorizontal, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowUpDown, Library, Plus, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, EmptyState, PageHeader, Skeleton, useToast } from '@/shared/ui';
+import { Button, Chip, EmptyState, FAB, PageHeader, Skeleton, useToast } from '@/shared/ui';
 import { CollectionList, type ViewMode } from './CollectionList';
 import { FiltersSheet } from './FiltersSheet';
 import { SortSheet } from './SortSheet';
@@ -137,6 +137,7 @@ export function CollectionPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const navigate = useNavigate();
 
   const { data: items, isPending, isError } = useCollectionItems(filter, sort);
   const seed = useSeedDemoData();
@@ -269,6 +270,10 @@ export function CollectionPage() {
       />
       <SortSheet open={sortOpen} onOpenChange={setSortOpen} value={sort} onChange={setSort} />
       <ViewModeSheet open={viewOpen} onOpenChange={setViewOpen} value={view} onChange={setView} />
+
+      <FAB ariaLabel={t('collection.fabAddLabel')} onClick={() => navigate('/add/manual')}>
+        <Plus className="h-6 w-6" aria-hidden="true" />
+      </FAB>
     </>
   );
 }

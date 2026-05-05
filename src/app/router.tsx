@@ -31,6 +31,9 @@ const BySetPage = lazy(() => import('@/features/stats').then((m) => ({ default: 
 const ProfilePage = lazy(() =>
   import('@/features/profile').then((m) => ({ default: m.ProfilePage })),
 );
+const AddManualPage = lazy(() =>
+  import('@/features/add').then((m) => ({ default: m.AddManualPage })),
+);
 
 const LoginPage = lazy(() => import('@/features/auth').then((m) => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('@/features/auth').then((m) => ({ default: m.SignupPage })));
@@ -204,6 +207,14 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<RouteFallback />}>
                 <ProfilePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'add/manual',
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <AddManualPage />
               </Suspense>
             ),
           },

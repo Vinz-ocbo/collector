@@ -333,7 +333,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Binders UI** — repository + hooks support binders (`createBinder`, `listBinders`, `binderId` on items), but no dedicated UI yet (no `/collection/binders/*` routes). Filter by binder via the bottom sheet is also TBD.
 - **Stats — value-history** — overview/color/type/rarity/set are wired (set page uses backend `/v1/sets` for the denominator); the value-history line chart is still P2 (needs daily snapshots).
 - **Stats deeplink to Collection** — clicking a color/type/rarity row should filter the Collection page. Currently the Collection page reads filter from local state, not from URL search params. Wire this when needed.
-- **Item add flow** (`/add/manual`, `/add/manual/details`, mode série) — designed but not implemented; depends on Search feature.
+- **Item add flow MVP** ✅ — FAB on Collection → `/add/manual` (focused search, auto-focus on the input) → tap a result opens `<AddToCollectionSheet>` inline → submit toasts and navigates back to `/`. Series mode (#39), method picker (#36), prefs pre-fill, and a separate `/add/manual/details` route are deferred follow-ups.
 - **Collection extras** — virtualization at 100+ items, long-press menu, pull-to-refresh. (Sort + view-mode prefs persisted in Dexie ✅; filter is URL-driven for deeplinks ✅.)
 - **i18n DONE** — all UI strings extracted (~250 keys, FR + EN). UI language switcher lives on the Profile page (`LanguageSwitcher.tsx`); persistence handled by `LanguageDetector`'s `localStorage` cache (`tcg-collector.lang`).
 - **Auth + collection sync routes on the backend** — proxy + ingest are live; auth and `/v1/collection/*` endpoints are not yet implemented.
