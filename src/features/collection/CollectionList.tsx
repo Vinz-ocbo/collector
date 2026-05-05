@@ -12,6 +12,11 @@ export type CollectionListProps = {
   items: CollectionItemWithCard[];
   mode: ViewMode;
   className?: string;
+  /**
+   * Long-press / kebab-button handler. Wired only in grid + list views;
+   * stack view shows aggregated rows that don't map 1:1 to a single item.
+   */
+  onItemMenu?: (item: CollectionItemWithCard) => void;
 };
 
 /**
@@ -20,7 +25,7 @@ export type CollectionListProps = {
  * ~20. When real Scryfall imports land, swap the inner container for
  * `@tanstack/react-virtual`.
  */
-export function CollectionList({ items, mode, className }: CollectionListProps) {
+export function CollectionList({ items, mode, className, onItemMenu }: CollectionListProps) {
   if (mode === 'stack') {
     return <StackView items={items} className={className} />;
   }
@@ -35,7 +40,11 @@ export function CollectionList({ items, mode, className }: CollectionListProps) 
       >
         {items.map((item) => (
           <li key={item.id}>
-            <CollectionItemCard item={item} variant="grid" />
+            <CollectionItemCard
+              item={item}
+              variant="grid"
+              {...(onItemMenu ? { onMenu: onItemMenu } : {})}
+            />
           </li>
         ))}
       </ul>
@@ -46,7 +55,11 @@ export function CollectionList({ items, mode, className }: CollectionListProps) 
     <ul className={cn('flex flex-col divide-y divide-border', className)}>
       {items.map((item) => (
         <li key={item.id}>
-          <CollectionItemCard item={item} variant="list" />
+          <CollectionItemCard
+            item={item}
+            variant="list"
+            {...(onItemMenu ? { onMenu: onItemMenu } : {})}
+          />
         </li>
       ))}
     </ul>

@@ -149,6 +149,23 @@
       "title": "Could not load collection",
       "description": "Try again or contact support if the problem persists."
     },
+    "itemMenu": {
+      "openLabel": "Actions on {{name}}",
+      "title": "Actions",
+      "description": "What would you like to do with this copy?",
+      "duplicate": "Duplicate",
+      "duplicatedToast": {
+        "title": "Copy duplicated",
+        "description": "A copy of {{name}} was added to your collection."
+      },
+      "deleteTitle": "Delete this copy?",
+      "deleteDescription": "{{name}} will be removed from your collection. This action cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deletedToast": {
+        "title": "Copy deleted",
+        "description": "{{name}} was removed from your collection."
+      }
+    },
     "filters": {
       "title": "Filters",
       "label": "Filters",

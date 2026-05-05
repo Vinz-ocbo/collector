@@ -2,19 +2,22 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowUpDown, Library, Plus, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, EmptyState, FAB, PageHeader, Skeleton, useToast } from '@/shared/ui';
+import { AlertDialog, Button, Chip, EmptyState, FAB, PageHeader, Skeleton, useToast } from '@/shared/ui';
 import { CollectionList, type ViewMode } from './CollectionList';
 import { FiltersSheet } from './FiltersSheet';
 import { SortSheet } from './SortSheet';
 import { ViewModeSheet } from './ViewModeSheet';
+import { ItemActionSheet } from './ItemActionSheet';
 import {
+  useAddItem,
   useCollectionItems,
   useCollectionViewPrefs,
+  useDeleteItem,
   useSaveCollectionViewPrefs,
   useSeedDemoData,
 } from './hooks';
 import { DEFAULT_VIEW_PREFS } from './preferences';
-import type { ItemFilter, ItemSort } from './repository';
+import type { CollectionItemWithCard, ItemFilter, ItemSort } from './repository';
 import { filterFromSearchParams, searchParamsFromFilter } from './urlFilters';
 
 const SORT_SHORT_KEYS: Record<
@@ -137,10 +140,14 @@ export function CollectionPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [menuItem, setMenuItem] = useState<CollectionItemWithCard | null>(null);
+  const [deleteItemTarget, setDeleteItemTarget] = useState<CollectionItemWithCard | null>(null);
   const navigate = useNavigate();
 
   const { data: items, isPending, isError } = useCollectionItems(filter, sort);
   const seed = useSeedDemoData();
+  const addItem = useAddItem();
+  const deleteItem = useDeleteItem();
   const { show } = useToast();
 
   const activeChips = useMemo(() => activeFilterChips(filter), [filter]);
@@ -152,6 +159,54 @@ export function CollectionPage() {
       description: t('collection.empty.demoLoaded.description', {
         cards: result.cards,
         items: result.items,
+      }),
+      tone: 'success',
+    });
+  };
+
+  const handleEdit = (target: CollectionItemWithCard) => {
+    setMenuItem(null);
+    navigate(`/collection/items/${target.id}/edit`);
+  };
+
+  const handleDuplicate = async (target: CollectionItemWithCard) => {
+    setMenuItem(null);
+    await addItem.mutateAsync({
+      // The card is already in the local Dexie cards table — no need to pass
+      // it. Spread the item's add-time fields, but skip auto-generated ones.
+      cardId: target.cardId,
+      game: target.game,
+      quantity: target.quantity,
+      condition: target.condition,
+      foil: target.foil,
+      language: target.language,
+      binderId: target.binderId,
+      ...(target.pricePaid !== undefined ? { pricePaid: target.pricePaid } : {}),
+      ...(target.notes !== undefined ? { notes: target.notes } : {}),
+    });
+    show({
+      title: t('collection.itemMenu.duplicatedToast.title'),
+      description: t('collection.itemMenu.duplicatedToast.description', {
+        name: target.card.name,
+      }),
+      tone: 'success',
+    });
+  };
+
+  const handleAskDelete = (target: CollectionItemWithCard) => {
+    setMenuItem(null);
+    setDeleteItemTarget(target);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteItemTarget) return;
+    const target = deleteItemTarget;
+    await deleteItem.mutateAsync({ id: target.id });
+    setDeleteItemTarget(null);
+    show({
+      title: t('collection.itemMenu.deletedToast.title'),
+      description: t('collection.itemMenu.deletedToast.description', {
+        name: target.card.name,
       }),
       tone: 'success',
     });
@@ -259,7 +314,7 @@ export function CollectionPage() {
           />
         )
       ) : (
-        <CollectionList items={items} mode={view} />
+        <CollectionList items={items} mode={view} onItemMenu={setMenuItem} />
       )}
 
       <FiltersSheet
@@ -274,6 +329,34 @@ export function CollectionPage() {
       <FAB ariaLabel={t('collection.fabAddLabel')} onClick={() => navigate('/add/manual')}>
         <Plus className="h-6 w-6" aria-hidden="true" />
       </FAB>
+
+      <ItemActionSheet
+        item={menuItem}
+        onOpenChange={(open) => {
+          if (!open) setMenuItem(null);
+        }}
+        onEdit={handleEdit}
+        onDuplicate={(target) => void handleDuplicate(target)}
+        onDelete={handleAskDelete}
+      />
+
+      <AlertDialog
+        open={deleteItemTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItemTarget(null);
+        }}
+        title={t('collection.itemMenu.deleteTitle')}
+        description={
+          deleteItemTarget
+            ? t('collection.itemMenu.deleteDescription', { name: deleteItemTarget.card.name })
+            : ''
+        }
+        confirmLabel={
+          deleteItem.isPending ? t('common.loading') : t('collection.itemMenu.deleteConfirm')
+        }
+        destructive
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </>
   );
 }

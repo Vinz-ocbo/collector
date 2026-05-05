@@ -149,6 +149,23 @@
       "title": "Impossible de charger la collection",
       "description": "Réessayez ou contactez le support si le problème persiste."
     },
+    "itemMenu": {
+      "openLabel": "Actions sur {{name}}",
+      "title": "Actions",
+      "description": "Que voulez-vous faire avec cet exemplaire ?",
+      "duplicate": "Dupliquer",
+      "duplicatedToast": {
+        "title": "Exemplaire dupliqué",
+        "description": "Une copie de {{name}} a été ajoutée à votre collection."
+      },
+      "deleteTitle": "Supprimer cet exemplaire ?",
+      "deleteDescription": "{{name}} sera retirée de votre collection. Cette action est irréversible.",
+      "deleteConfirm": "Supprimer",
+      "deletedToast": {
+        "title": "Exemplaire supprimé",
+        "description": "{{name}} a été retirée de votre collection."
+      }
+    },
     "filters": {
       "title": "Filtres",
       "label": "Filtres",
