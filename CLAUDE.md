@@ -184,7 +184,7 @@ The Collection feature is the reference implementation for "data-backed pages" �
 - **Data layer** in `src/features/collection/repository.ts`: pure async functions over Dexie (`listItems`, `getItem`, `addItem`, `updateItem`, `deleteItem`, `upsertCards`, `getSummary`, `seedDemoData`, `listBinders`, `createBinder`). No React, no hooks.
 - **Hooks layer** in `src/features/collection/hooks.ts`: TanStack Query wrappers (`useCollectionItems(filter, sort)`, `useCollectionItem(id)`, `useUpdateItem`, `useDeleteItem`, `useSeedDemoData`, …). All mutations call `invalidateQueries({ queryKey: ['collection'] })` on success.
 - **`Card` storage**: `cards` table holds the card metadata referenced by `CollectionItem.cardId`. The seed pre-loads 20 Magic cards with SVG placeholder images. Real Scryfall integration replaces `seedDemoData` later.
-- **Filters / sort / view mode**: held in component state on `CollectionPage`. Bottom sheets edit a draft and apply on close (per design spec). Persisting these to user preferences (Dexie `prefs`) is a follow-up.
+- **Filters / sort / view mode**: filter is URL-driven (deeplink-friendly, see `urlFilters.ts`). Sort + view-mode are persisted in Dexie `prefs` under `collection.viewPrefs` via `useCollectionViewPrefs` / `useSaveCollectionViewPrefs` (optimistic update on mutate). Bottom sheets edit a draft and apply on close (per design spec).
 - **Virtualization deferred**: design rule kicks in at 100+ items; current seed is 20 so plain CSS grid is used. Wire `@tanstack/react-virtual` when real data arrives.
 - **Tests**: repository tests use `fake-indexeddb/auto` and reset via `await db.delete(); await db.open()` in `beforeEach` (the singleton must be re-opened, not bypassed via raw `indexedDB.deleteDatabase`).
 - **Dev seeding**: empty Collection page exposes a "Charger un jeu de démo" button calling `useSeedDemoData()`. Idempotent — running twice doesn't create duplicates.
@@ -289,7 +289,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Stats — completion par set + value-history** — overview/color/type/rarity are wired; the by-set page is deferred (needs Scryfall set totals); the value-history line chart is P2 (needs daily snapshots).
 - **Stats deeplink to Collection** — clicking a color/type/rarity row should filter the Collection page. Currently the Collection page reads filter from local state, not from URL search params. Wire this when needed.
 - **Item add flow** (`/add/manual`, `/add/manual/details`, mode série) — designed but not implemented; depends on Search feature.
-- **Collection extras** — virtualization at 100+ items, persistent filter/sort/view-mode preferences (Dexie `prefs`), long-press menu, pull-to-refresh.
+- **Collection extras** — virtualization at 100+ items, long-press menu, pull-to-refresh. (Sort + view-mode prefs persisted in Dexie ✅; filter is URL-driven for deeplinks ✅.)
 - **i18n DONE** — all UI strings extracted (~250 keys, FR + EN). The remaining gap is a UI language switcher (currently respects `navigator.language` only); the design earmarks it for `/profile/preferences` (a stub today).
 - **Backend API** (Fastify/NestJS — separate repo or workspace).
 - **Sync layer** — `CollectionItem.syncStatus` is set to `'pending'` on writes but no sync queue exists yet.

@@ -7,7 +7,13 @@ import { CollectionList, type ViewMode } from './CollectionList';
 import { FiltersSheet } from './FiltersSheet';
 import { SortSheet } from './SortSheet';
 import { ViewModeSheet } from './ViewModeSheet';
-import { useCollectionItems, useSeedDemoData } from './hooks';
+import {
+  useCollectionItems,
+  useCollectionViewPrefs,
+  useSaveCollectionViewPrefs,
+  useSeedDemoData,
+} from './hooks';
+import { DEFAULT_VIEW_PREFS } from './preferences';
 import type { ItemFilter, ItemSort } from './repository';
 import { filterFromSearchParams, searchParamsFromFilter } from './urlFilters';
 
@@ -116,8 +122,18 @@ export function CollectionPage() {
     },
     [setSearchParams],
   );
-  const [sort, setSort] = useState<ItemSort>('addedAt-desc');
-  const [view, setView] = useState<ViewMode>('grid');
+  const viewPrefs = useCollectionViewPrefs();
+  const saveViewPrefs = useSaveCollectionViewPrefs();
+  const sort: ItemSort = viewPrefs.data?.sort ?? DEFAULT_VIEW_PREFS.sort;
+  const view: ViewMode = viewPrefs.data?.view ?? DEFAULT_VIEW_PREFS.view;
+  const setSort = useCallback(
+    (next: ItemSort) => saveViewPrefs.mutate({ sort: next, view }),
+    [saveViewPrefs, view],
+  );
+  const setView = useCallback(
+    (next: ViewMode) => saveViewPrefs.mutate({ sort, view: next }),
+    [saveViewPrefs, sort],
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);

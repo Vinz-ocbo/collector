@@ -18,6 +18,12 @@ import {
   type UpdateItemInput,
 } from './repository';
 import type { Binder } from '@/shared/domain';
+import {
+  DEFAULT_VIEW_PREFS,
+  getCollectionViewPrefs,
+  setCollectionViewPrefs,
+  type CollectionViewPrefs,
+} from './preferences';
 
 const KEYS = {
   items: (filter: ItemFilter, sort: ItemSort) => ['collection', 'items', filter, sort] as const,
@@ -25,6 +31,7 @@ const KEYS = {
   summary: () => ['collection', 'summary'] as const,
   binders: () => ['collection', 'binders'] as const,
   ownedCounts: () => ['collection', 'ownedCounts'] as const,
+  viewPrefs: () => ['collection', 'viewPrefs'] as const,
 };
 
 export function useCollectionItems(filter: ItemFilter = {}, sort: ItemSort = 'addedAt-desc') {
@@ -116,3 +123,29 @@ export function useSeedDemoData() {
     onSuccess: () => invalidateCollection(qc),
   });
 }
+
+/**
+ * Persisted sort + view-mode preferences for the Collection page.
+ * `staleTime: Infinity` because the only writer is `useSaveCollectionViewPrefs`,
+ * which seeds the cache itself via `onMutate`.
+ */
+export function useCollectionViewPrefs() {
+  return useQuery<CollectionViewPrefs>({
+    queryKey: KEYS.viewPrefs(),
+    queryFn: () => getCollectionViewPrefs(),
+    staleTime: Infinity,
+  });
+}
+
+export function useSaveCollectionViewPrefs() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, CollectionViewPrefs>({
+    mutationFn: (prefs) => setCollectionViewPrefs(prefs),
+    onMutate: async (next) => {
+      await qc.cancelQueries({ queryKey: KEYS.viewPrefs() });
+      qc.setQueryData<CollectionViewPrefs>(KEYS.viewPrefs(), next);
+    },
+  });
+}
+
+export { DEFAULT_VIEW_PREFS };
