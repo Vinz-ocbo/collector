@@ -11,7 +11,7 @@
 
 import { db } from '@/shared/db';
 import type { Card, CardSet } from '@/shared/domain';
-import type { SearchBackend, SearchInput, SearchResult } from './types';
+import type { Ruling, SearchBackend, SearchInput, SearchResult } from './types';
 
 type ApiSearchResult = {
   cards: Card[];
@@ -105,6 +105,19 @@ export function createScryfallSearchBackend(opts: ScryfallSearchBackendOptions):
     async getSets(): Promise<CardSet[]> {
       const data = await call<{ sets: CardSet[] }>('/v1/sets');
       return data.sets;
+    },
+
+    async getCardRulings(id: string): Promise<Ruling[]> {
+      try {
+        const data = await call<{ rulings: Ruling[] }>(
+          `/v1/cards/${encodeURIComponent(id)}/rulings`,
+        );
+        return data.rulings;
+      } catch (error) {
+        // 404 → no rulings (treat as empty list rather than error)
+        if (error instanceof SearchBackendError && error.status === 404) return [];
+        throw error;
+      }
     },
   };
 }

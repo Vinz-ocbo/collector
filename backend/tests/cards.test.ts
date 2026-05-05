@@ -42,6 +42,7 @@ function makeStubClient(overrides: Partial<ScryfallClient> = {}): ScryfallClient
   return {
     searchCards: vi.fn().mockResolvedValue({ cards: [sampleCard], total: 1, hasMore: false }),
     getCardById: vi.fn().mockResolvedValue(sampleCard),
+    getCardRulings: vi.fn().mockResolvedValue({ rulings: [] }),
     getSets: vi.fn().mockResolvedValue({ sets: [] }),
     getSetByCode: vi.fn().mockRejectedValue(new ScryfallNotFoundError('No stub')),
     getBulkDataInfo: vi.fn().mockRejectedValue(new ScryfallNotFoundError('No stub')),
@@ -211,6 +212,46 @@ describe('GET /v1/cards/:id', () => {
     });
     const response = await failingApp.inject({ method: 'GET', url: '/v1/cards/anything' });
     expect(response.statusCode).toBe(502);
+    await failingApp.close();
+  });
+});
+
+describe('GET /v1/cards/:id/rulings', () => {
+  it('returns the rulings list', async () => {
+    const getCardRulings = vi.fn().mockResolvedValue({
+      rulings: [
+        { source: 'wotc', publishedAt: '2009-10-01', comment: 'Ruling 1' },
+        { source: 'wotc', publishedAt: '2010-01-15', comment: 'Ruling 2' },
+      ],
+    });
+    const rulingsApp = await buildApp({
+      config: loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent' }),
+      scryfallClient: makeStubClient({ getCardRulings }),
+    });
+    const response = await rulingsApp.inject({
+      method: 'GET',
+      url: '/v1/cards/abc/rulings',
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.rulings).toHaveLength(2);
+    expect(body.rulings[0].comment).toBe('Ruling 1');
+    expect(getCardRulings).toHaveBeenCalledWith('abc');
+    await rulingsApp.close();
+  });
+
+  it('returns 404 when the card is unknown to Scryfall', async () => {
+    const failingApp = await buildApp({
+      config: loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent' }),
+      scryfallClient: makeStubClient({
+        getCardRulings: vi.fn().mockRejectedValue(new ScryfallNotFoundError('No card')),
+      }),
+    });
+    const response = await failingApp.inject({
+      method: 'GET',
+      url: '/v1/cards/missing/rulings',
+    });
+    expect(response.statusCode).toBe(404);
     await failingApp.close();
   });
 });

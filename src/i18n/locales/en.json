@@ -409,6 +409,14 @@
         "heading_one": "{{count}} other printing",
         "heading_other": "{{count}} other printings",
         "itemAria": "View the {{set}} #{{number}} printing"
+      },
+      "rulings": {
+        "heading_one": "{{count}} official ruling",
+        "heading_other": "{{count}} official rulings",
+        "source": {
+          "wotc": "Wizards of the Coast",
+          "scryfall": "Scryfall"
+        }
       }
     },
     "addSheet": {

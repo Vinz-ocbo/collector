@@ -6,6 +6,7 @@ export { AddToCollectionSheet, type AddToCollectionSheetProps } from './AddToCol
 export {
   useSearchCards,
   useCatalogCard,
+  useCardRulings,
   useOtherPrintings,
   useSets,
   useRecentSearches,
@@ -15,4 +16,11 @@ export {
 export { createMockSearchBackend } from './mockBackend';
 export { createScryfallSearchBackend, SearchBackendError } from './scryfallBackend';
 export type { ScryfallSearchBackendOptions } from './scryfallBackend';
-export type { SearchBackend, SearchInput, SearchResult, SearchFilter, SearchSort } from './types';
+export type {
+  Ruling,
+  SearchBackend,
+  SearchInput,
+  SearchResult,
+  SearchFilter,
+  SearchSort,
+} from './types';

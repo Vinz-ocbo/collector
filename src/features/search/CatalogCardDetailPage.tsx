@@ -4,7 +4,7 @@ import { Library, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, CardImageZoom, CardThumbnail, PageHeader, Skeleton } from '@/shared/ui';
 import { useOwnedCounts } from '@/features/collection';
-import { useCatalogCard, useOtherPrintings } from './hooks';
+import { useCardRulings, useCatalogCard, useOtherPrintings } from './hooks';
 import { AddToCollectionSheet } from './AddToCollectionSheet';
 import type { Card } from '@/shared/domain';
 
@@ -133,6 +133,7 @@ export function CatalogCardDetailPage() {
       </article>
 
       <OtherPrintingsSection card={data} />
+      <RulingsSection cardId={data.id} />
 
       <AddToCollectionSheet open={addOpen} onOpenChange={setAddOpen} card={data} />
       <CardImageZoom
@@ -204,6 +205,71 @@ function formatEurShort(value: number, locale: string): string {
     currency: 'EUR',
     maximumFractionDigits: value < 10 ? 2 : 0,
   }).format(value);
+}
+
+function RulingsSection({ cardId }: { cardId: string }) {
+  const { t, i18n } = useTranslation();
+  const rulings = useCardRulings(cardId);
+
+  // Hide while loading or when there are no rulings — avoid an empty heading.
+  if (rulings.isPending || !rulings.data || rulings.data.length === 0) {
+    return rulings.isPending ? (
+      <section className="px-4 pb-4">
+        <Skeleton className="h-5 w-40" />
+        <div className="mt-3 space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </section>
+    ) : null;
+  }
+
+  const dateFormatter = new Intl.DateTimeFormat(i18n.language, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <section className="px-4 pb-4">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fg-muted">
+        {t('search.card.rulings.heading', { count: rulings.data.length })}
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {rulings.data.map((ruling, idx) => {
+          const date = parseDate(ruling.publishedAt);
+          return (
+            <li
+              key={`${ruling.publishedAt}-${idx}`}
+              className="rounded-md border border-border bg-bg-raised p-3"
+            >
+              <header className="mb-1 flex items-center justify-between gap-2 text-xs text-fg-muted">
+                <span className="font-medium uppercase">
+                  {t(`search.card.rulings.source.${ruling.source}`, {
+                    defaultValue: ruling.source,
+                  })}
+                </span>
+                <time dateTime={ruling.publishedAt}>
+                  {date ? dateFormatter.format(date) : ruling.publishedAt}
+                </time>
+              </header>
+              <p className="whitespace-pre-line text-sm">{ruling.comment}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function parseDate(iso: string): Date | null {
+  // Scryfall ships YYYY-MM-DD strings. Construct in UTC so locale-aware
+  // formatting doesn't shift the date by a timezone.
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  const d = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {

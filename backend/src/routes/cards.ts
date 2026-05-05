@@ -6,6 +6,7 @@ import {
   searchQuerySchema,
   searchResultSchema,
 } from '../schemas/cards.js';
+import { rulingListSchema } from '../schemas/rulings.js';
 import {
   ScryfallNotFoundError,
   ScryfallUpstreamError,
@@ -65,6 +66,25 @@ export function buildCardsRoutes(deps: CardsRoutesDeps): FastifyPluginAsyncZod {
             if (fromDb) return fromDb;
           }
           return await scryfall.getCardById(request.params.id);
+        } catch (error) {
+          return mapScryfallError(error, reply);
+        }
+      },
+    );
+
+    fastify.get(
+      '/v1/cards/:id/rulings',
+      {
+        schema: {
+          tags: ['cards'],
+          summary: 'List Scryfall rulings for a card (oldest first)',
+          params: cardIdParamSchema,
+          response: { 200: rulingListSchema },
+        },
+      },
+      async (request, reply) => {
+        try {
+          return await scryfall.getCardRulings(request.params.id);
         } catch (error) {
           return mapScryfallError(error, reply);
         }

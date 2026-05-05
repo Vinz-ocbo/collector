@@ -7,6 +7,12 @@
 
 import type { Card, CardSet, Game } from '@/shared/domain';
 
+export type Ruling = {
+  source: string;
+  publishedAt: string;
+  comment: string;
+};
+
 export type SearchSort = 'relevance' | 'name-asc' | 'name-desc' | 'price-desc' | 'price-asc';
 
 export type SearchFilter = {
@@ -41,4 +47,6 @@ export type SearchBackend = {
   getCardById(id: string): Promise<Card | null>;
   /** Lists known sets — used by the set picker in filters. */
   getSets(): Promise<CardSet[]>;
+  /** Returns Scryfall rulings for the given card, oldest first. */
+  getCardRulings(id: string): Promise<Ruling[]>;
 };

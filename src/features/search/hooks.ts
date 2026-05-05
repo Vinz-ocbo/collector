@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Card, CardSet } from '@/shared/domain';
 import { useSearchBackend } from './SearchBackendProvider';
 import { clearRecentSearches, getRecentSearches, pushRecentSearch } from './recentSearches';
-import type { SearchInput, SearchResult } from './types';
+import type { Ruling, SearchInput, SearchResult } from './types';
 
 const KEYS = {
   search: (input: SearchInput) => ['search', 'cards', input] as const,
@@ -76,6 +76,20 @@ export function useOtherPrintings(card: Pick<Card, 'id' | 'name'> | null | undef
         .sort((a, b) => (b.releasedAt ?? '').localeCompare(a.releasedAt ?? ''));
     },
     enabled,
+  });
+}
+
+/**
+ * Scryfall rulings for a card. Cached aggressively — rulings are
+ * append-only and the backend already keeps a 24h LRU.
+ */
+export function useCardRulings(id: string | undefined) {
+  const backend = useSearchBackend();
+  return useQuery<Ruling[]>({
+    queryKey: id ? (['search', 'rulings', id] as const) : ['search', 'rulings', null],
+    queryFn: () => (id ? backend.getCardRulings(id) : Promise.resolve([])),
+    enabled: !!id,
+    staleTime: 60 * 60 * 1000,
   });
 }
 

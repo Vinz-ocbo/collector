@@ -100,6 +100,11 @@ export function createMockSearchBackend(): SearchBackend {
       return (await db.cards.get(id)) ?? null;
     },
 
+    getCardRulings(): Promise<never[]> {
+      // Mock catalogue has no rulings — the section just stays hidden.
+      return Promise.resolve([]);
+    },
+
     async getSets(): Promise<CardSet[]> {
       // The mock has no separate `sets` table — synthesize stubs from the
       // distinct setCodes present in the local cards table. Used by the

@@ -9,6 +9,7 @@ import { LRUCache } from 'lru-cache';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../config.js';
 import type { CardDto, SearchResultDto, SearchSort } from '../schemas/cards.js';
+import type { RulingDto, RulingListDto } from '../schemas/rulings.js';
 import type { SetDto, SetListDto } from '../schemas/sets.js';
 
 export type ScryfallImageUris = {
@@ -152,11 +153,35 @@ export type SearchCardsInput = {
 export type ScryfallClient = {
   searchCards(input: SearchCardsInput): Promise<SearchResultDto>;
   getCardById(id: string): Promise<CardDto>;
+  /** Returns every ruling Scryfall knows about the given card, oldest first. */
+  getCardRulings(id: string): Promise<RulingListDto>;
   getSets(): Promise<SetListDto>;
   getSetByCode(code: string): Promise<SetDto>;
   /** Fetches the bulk-data manifest entry for the given dump type. */
   getBulkDataInfo(type: ScryfallBulkDataEntry['type']): Promise<ScryfallBulkDataEntry>;
 };
+
+type ScryfallRuling = {
+  object: 'ruling';
+  oracle_id: string;
+  source: string;
+  published_at: string;
+  comment: string;
+};
+
+type ScryfallRulingsResponse = {
+  object: 'list';
+  data: ScryfallRuling[];
+  has_more: boolean;
+};
+
+function rulingToDto(ruling: ScryfallRuling): RulingDto {
+  return {
+    source: ruling.source,
+    publishedAt: ruling.published_at,
+    comment: ruling.comment,
+  };
+}
 
 /**
  * Map our sort enum to Scryfall's `order` + `dir` query params.
@@ -218,6 +243,11 @@ export function createScryfallClient(config: Config, logger: FastifyBaseLogger):
   const cardCache = new LRUCache<string, CardDto>({
     max: 5000,
     ttl: 60 * 60 * 1000,
+  });
+  // Rulings are append-only and rarely change — long TTL, modest cap.
+  const rulingsCache = new LRUCache<string, RulingListDto>({
+    max: 2000,
+    ttl: 24 * 60 * 60 * 1000,
   });
   // Sets rarely change — long TTL, small cap (one entry for the full list,
   // a few hundred for individual sets).
@@ -379,6 +409,20 @@ export function createScryfallClient(config: Config, logger: FastifyBaseLogger):
       const scryfallCard = await fetchJson<ScryfallCard>(`/cards/${id}`);
       const dto = toDto(scryfallCard);
       cardCache.set(id, dto);
+      return dto;
+    },
+
+    async getCardRulings(id) {
+      const cached = rulingsCache.get(id);
+      if (cached) {
+        logger.debug({ id }, 'scryfall rulings cache hit');
+        return cached;
+      }
+      const response = await fetchJson<ScryfallRulingsResponse>(
+        `/cards/${encodeURIComponent(id)}/rulings`,
+      );
+      const dto: RulingListDto = { rulings: response.data.map(rulingToDto) };
+      rulingsCache.set(id, dto);
       return dto;
     },
 

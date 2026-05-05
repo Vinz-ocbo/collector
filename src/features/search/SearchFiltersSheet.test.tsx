@@ -35,6 +35,7 @@ function makeBackend(): SearchBackend {
   return {
     searchCards: vi.fn().mockResolvedValue({ cards: [], total: 0 }),
     getCardById: vi.fn().mockResolvedValue(null),
+    getCardRulings: vi.fn().mockResolvedValue([]),
     getSets: vi.fn().mockResolvedValue(SETS),
   };
 }
