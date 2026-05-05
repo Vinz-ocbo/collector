@@ -5,7 +5,7 @@
  * useMemo on top of useCollectionItems.
  */
 
-import type { Card, CollectionItem } from '@/shared/domain';
+import type { Card, CardSet, CollectionItem } from '@/shared/domain';
 import type { CollectionItemWithCard } from '@/features/collection';
 
 export type ColorBucket = 'W' | 'U' | 'B' | 'R' | 'G' | 'C' | 'M';
@@ -214,6 +214,90 @@ export function computeByRarity(items: CollectionItemWithCard[]): RarityRow[] {
     });
   }
   rows.sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+
+export type SetRow = {
+  setCode: string;
+  setName: string;
+  iconSvgUri: string;
+  /** Official set size from Scryfall (distinct cards in the printed checklist). */
+  totalCards: number;
+  /** Distinct cards (by `cardId`) the user owns from this set. */
+  ownedUnique: number;
+  /** Total quantity owned (sum of `item.quantity`) across all those cards. */
+  ownedQuantity: number;
+  /** 0–1. `ownedUnique / totalCards`, clamped to 1 in case of weirdness. */
+  completion: number;
+  /** Estimated EUR value for the items the user owns from this set. */
+  totalValueEur: number;
+};
+
+/**
+ * Joins collection items with the global set catalogue and returns one row
+ * per set the user owns at least one card from. Sets the user has nothing in
+ * are dropped to keep the list signal-heavy. The denominator uses Scryfall's
+ * official `cardCount`; sets whose `cardCount` is 0 or missing are excluded
+ * because the percentage would be meaningless.
+ */
+export function computeBySet(items: CollectionItemWithCard[], sets: CardSet[]): SetRow[] {
+  // Scryfall returns set codes in lowercase; the local seed historically used
+  // uppercase. Normalize both sides so legacy seed data still joins cleanly.
+  const setsByCode = new Map<string, CardSet>();
+  for (const s of sets) setsByCode.set(s.code.toLowerCase(), s);
+
+  type Bucket = { uniqueIds: Set<string>; quantity: number; valueEur: number };
+  const buckets = new Map<string, Bucket>();
+  for (const item of items) {
+    const code = item.card.setCode.toLowerCase();
+    const bucket = buckets.get(code) ?? { uniqueIds: new Set(), quantity: 0, valueEur: 0 };
+    bucket.uniqueIds.add(item.cardId);
+    bucket.quantity += item.quantity;
+    bucket.valueEur += itemValueEur(item);
+    buckets.set(code, bucket);
+  }
+
+  const rows: SetRow[] = [];
+  for (const [code, bucket] of buckets) {
+    const set = setsByCode.get(code);
+    // Item references a set we don't know about (e.g. seed data with a fake
+    // setCode, or set ingest hasn't run yet) — emit a row but mark it so the
+    // UI can render gracefully.
+    const totalCards = set?.cardCount ?? 0;
+    if (totalCards === 0) {
+      rows.push({
+        setCode: code,
+        setName: set?.name ?? code.toUpperCase(),
+        iconSvgUri: set?.iconSvgUri ?? '',
+        totalCards: 0,
+        ownedUnique: bucket.uniqueIds.size,
+        ownedQuantity: bucket.quantity,
+        completion: 0,
+        totalValueEur: bucket.valueEur,
+      });
+      continue;
+    }
+    rows.push({
+      setCode: code,
+      setName: set!.name,
+      iconSvgUri: set!.iconSvgUri,
+      totalCards,
+      ownedUnique: bucket.uniqueIds.size,
+      ownedQuantity: bucket.quantity,
+      completion: Math.min(1, bucket.uniqueIds.size / totalCards),
+      totalValueEur: bucket.valueEur,
+    });
+  }
+
+  // Sort: highest completion first, then more cards owned, then alphabetical.
+  rows.sort(
+    (a, b) =>
+      b.completion - a.completion ||
+      b.ownedUnique - a.ownedUnique ||
+      a.setName.localeCompare(b.setName),
+  );
   return rows;
 }
 

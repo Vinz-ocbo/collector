@@ -342,7 +342,8 @@
     "tiles": {
       "byColor": "Par couleur",
       "byType": "Par type",
-      "byRarity": "Par rareté"
+      "byRarity": "Par rareté",
+      "bySet": "Par set"
     },
     "topHeading": "Top de ma collection",
     "byColor": {
@@ -368,6 +369,16 @@
       "centerLabel": "cartes",
       "unit": "€"
     },
+    "bySet": {
+      "title": "Par set",
+      "emptyTitle": "Pas encore de set",
+      "emptyDescription": "Ajoutez des cartes à votre collection pour voir votre progression par set.",
+      "headerHint_one": "{{count}} set représenté dans votre collection",
+      "headerHint_other": "{{count}} sets représentés dans votre collection",
+      "completion": "{{owned}} / {{total}} cartes",
+      "completionUnknown": "{{owned}} cartes possédées",
+      "progressAria": "{{set}} : complétion {{percent}}"
+    },
     "colors": {
       "W": "Blanc",
       "U": "Bleu",
@@ -388,7 +399,8 @@
     "deeplink": {
       "viewByColor": "Voir mes cartes {{label}}",
       "viewByRarity": "Voir mes cartes de rareté {{label}}",
-      "viewByType": "Voir mes cartes de type {{label}}"
+      "viewByType": "Voir mes cartes de type {{label}}",
+      "viewBySet": "Voir mes cartes du set {{label}}"
     }
   },
   "profile": {

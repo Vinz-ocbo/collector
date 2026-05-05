@@ -17,7 +17,7 @@ What's wired:
 - Onboarding (`src/features/onboarding/`): 3-slide first-launch flow with persistent completion flag
 - Collection (`src/features/collection/`): Dexie-backed repository, CRUD hooks (TanStack Query), 3 view modes (list/grid/stack), filters/sort/view-mode bottom sheets, item detail + edit + delete, dev seed (20 Magic cards w/ SVG placeholders)
 - Search (`src/features/search/`): provider-agnostic backend (mock for offline dev OR HTTP backend pointing at the Fastify proxy), filters bottom sheet (color/rarity/set picker/hideOwned), debounced search input, "déjà possédée" indicator, recent searches (Dexie prefs), catalog card detail page with fullscreen image zoom, AddToCollectionSheet
-- Stats (`src/features/stats/`): pure selectors over collection items, custom SVG charts (Donut + horizontal bars), overview KPIs + by color/type/rarity sub-pages
+- Stats (`src/features/stats/`): pure selectors over collection items, custom SVG charts (Donut + horizontal bars), overview KPIs + by color/type/rarity/set sub-pages (set page joins items with the live set catalogue for completion %)
 - i18n (`src/i18n/`): i18next + LanguageDetector (localStorage → navigator), FR default + EN, fully type-safe via module augmentation, UI language switcher on Profile, all UI strings extracted (~250 keys) including Zod schema messages
 - Backend (`backend/`): Fastify + Drizzle + Postgres. Scryfall proxy with rate limit (8 req/s, identifiable User-Agent), bulk-ingest admin endpoint, OpenAPI/Swagger UI on `/docs`. DB optional — proxy-only mode when `DATABASE_URL` unset.
 - Top-level AppGate routes first-launch users to /onboarding
@@ -207,7 +207,7 @@ Same pattern as Auth: a small `SearchBackend` interface (`src/features/search/ty
 - **Selectors** (`src/features/stats/selectors.ts`): pure functions taking `CollectionItemWithCard[]` → derived stats. No I/O, no React, no Dexie. Trivially testable. Exported types include color/rarity palette mappings used by the chart components.
 - **Hooks** (`hooks.ts`): each hook calls `useCollectionItems({}, 'addedAt-desc')` and applies the selector inside `useMemo`. Hooks return `{ data, isPending, isError }` shaped like a query.
 - **Charts** (`src/features/stats/charts/`): hand-rolled SVG components — `DonutChart` (`stroke-dasharray` arcs around a single circle) and `BarChartHorizontal` (CSS bars). Avoids ~30+ KB of chart-library deps. Each chart provides accessible labels (`role="img"`, `<title>` tooltips, `aria-label` on bar buttons).
-- **Computed dimensions**: by color (W/U/B/R/G/C + multi-color "M"), by primary type (Creature/Instant/Sorcery/...), by rarity (mythic/rare/uncommon/common). The colors and labels are stable so the same palette is reused across pages.
+- **Computed dimensions**: by color (W/U/B/R/G/C + multi-color "M"), by primary type (Creature/Instant/Sorcery/...), by rarity (mythic/rare/uncommon/common), by set (joins items with `useSets()` from search to compute completion = `ownedUnique / cardCount`). The colors and labels are stable so the same palette is reused across pages.
 - **No backend dependency**: stats are 100% client-side from existing collection items. Sub-pages tap → eventually deeplink to a filtered Collection (currently the link is built but the Collection page does not yet read filter from URL search params — TODO).
 - **Deferred**: complétion par set (#45 — needs total cards per set from Scryfall) and value-history line chart (#46 — needs daily snapshots).
 
@@ -331,7 +331,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Other printings + rulings** — sub-routes designed (#26, #27) but not implemented.
 - **Scan feature (camera + OCR)** — separate large feature.
 - **Binders UI** — repository + hooks support binders (`createBinder`, `listBinders`, `binderId` on items), but no dedicated UI yet (no `/collection/binders/*` routes). Filter by binder via the bottom sheet is also TBD.
-- **Stats — completion par set + value-history** — overview/color/type/rarity are wired; the by-set page is deferred (needs Scryfall set totals); the value-history line chart is P2 (needs daily snapshots).
+- **Stats — value-history** — overview/color/type/rarity/set are wired (set page uses backend `/v1/sets` for the denominator); the value-history line chart is still P2 (needs daily snapshots).
 - **Stats deeplink to Collection** — clicking a color/type/rarity row should filter the Collection page. Currently the Collection page reads filter from local state, not from URL search params. Wire this when needed.
 - **Item add flow** (`/add/manual`, `/add/manual/details`, mode série) — designed but not implemented; depends on Search feature.
 - **Collection extras** — virtualization at 100+ items, long-press menu, pull-to-refresh. (Sort + view-mode prefs persisted in Dexie ✅; filter is URL-driven for deeplinks ✅.)

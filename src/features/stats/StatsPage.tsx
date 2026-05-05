@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BarChart3, Library, Palette, Sparkles, Tag } from 'lucide-react';
+import { BarChart3, Layers, Library, Palette, Sparkles, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CardThumbnail, EmptyState, PageHeader, Skeleton } from '@/shared/ui';
 import { useStatsOverview } from './hooks';
@@ -8,6 +8,7 @@ const TILES = [
   { to: '/stats/by-color', labelKey: 'byColor', Icon: Palette },
   { to: '/stats/by-type', labelKey: 'byType', Icon: Library },
   { to: '/stats/by-rarity', labelKey: 'byRarity', Icon: Sparkles },
+  { to: '/stats/by-set', labelKey: 'bySet', Icon: Layers },
 ] as const;
 
 export function StatsPage() {
@@ -86,7 +87,7 @@ export function StatsPage() {
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-fg-muted">
             {t('stats.tilesHeading')}
           </h2>
-          <ul className="grid grid-cols-3 gap-2">
+          <ul className="grid grid-cols-2 gap-2">
             {TILES.map(({ to, labelKey, Icon }) => (
               <li key={to}>
                 <Link

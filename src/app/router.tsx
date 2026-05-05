@@ -27,6 +27,7 @@ const ByTypePage = lazy(() => import('@/features/stats').then((m) => ({ default:
 const ByRarityPage = lazy(() =>
   import('@/features/stats').then((m) => ({ default: m.ByRarityPage })),
 );
+const BySetPage = lazy(() => import('@/features/stats').then((m) => ({ default: m.BySetPage })));
 const ProfilePage = lazy(() =>
   import('@/features/profile').then((m) => ({ default: m.ProfilePage })),
 );
@@ -179,6 +180,14 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<RouteFallback />}>
                 <ByRarityPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'stats/by-set',
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <BySetPage />
               </Suspense>
             ),
           },

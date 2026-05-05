@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { CardSet } from '@/shared/domain';
 import type { CollectionItemWithCard } from '@/features/collection';
-import { computeByColor, computeByRarity, computeByType, computeOverview } from './selectors';
+import {
+  computeByColor,
+  computeByRarity,
+  computeBySet,
+  computeByType,
+  computeOverview,
+} from './selectors';
 
 function item(
   partial: Partial<CollectionItemWithCard> & { name: string },
@@ -270,5 +277,98 @@ describe('computeByRarity', () => {
       withRarity('r', 'rare'),
     ]);
     expect(rows.map((r) => r.rarity)).toEqual(['mythic', 'rare', 'uncommon', 'common']);
+  });
+});
+
+describe('computeBySet', () => {
+  function fromSet(name: string, cardId: string, setCode: string, qty = 1, priceEur = 1) {
+    return item(
+      {
+        name,
+        cardId,
+        card: {
+          id: cardId,
+          game: 'magic',
+          name,
+          setCode,
+          setName: setCode.toUpperCase(),
+          collectorNumber: '1',
+          rarity: 'common',
+          language: 'en',
+          imageUris: { small: '', normal: '', large: '', png: '' },
+          releasedAt: '2020-01-01',
+          prices: { eur: priceEur, updatedAt: '2026-01-01' },
+          meta: {},
+        },
+      },
+      { quantity: qty },
+    );
+  }
+
+  function makeSet(code: string, name: string, cardCount: number): CardSet {
+    return {
+      id: code,
+      game: 'magic',
+      code,
+      name,
+      setType: 'expansion',
+      cardCount,
+      digital: false,
+      iconSvgUri: `https://example.test/${code}.svg`,
+    };
+  }
+
+  it('returns no rows when the user owns nothing', () => {
+    expect(computeBySet([], [makeSet('m21', 'Core 2021', 274)])).toEqual([]);
+  });
+
+  it('counts unique cardIds (not quantity) for completion', () => {
+    const items = [
+      fromSet('Bolt', 'card-1', 'm21', 4),
+      fromSet('Bolt-foil', 'card-1', 'm21', 1), // same cardId — already counted
+      fromSet('Counterspell', 'card-2', 'm21'),
+    ];
+    const rows = computeBySet(items, [makeSet('m21', 'Core 2021', 100)]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.ownedUnique).toBe(2);
+    expect(rows[0]!.ownedQuantity).toBe(6);
+    expect(rows[0]!.completion).toBeCloseTo(0.02);
+  });
+
+  it('clamps completion to 1 if the join is somehow over-counted', () => {
+    const items = [fromSet('a', 'a', 'tiny'), fromSet('b', 'b', 'tiny')];
+    const rows = computeBySet(items, [makeSet('tiny', 'Tiny', 1)]);
+    expect(rows[0]!.completion).toBe(1);
+  });
+
+  it('sorts highest completion first, ties broken by ownedUnique then name', () => {
+    const items = [
+      fromSet('a', 'a', 'big'), // 1/100
+      fromSet('b', 'b', 'small1'), // 1/2
+      fromSet('c', 'c', 'small2'), // 1/2 (tie)
+    ];
+    const sets = [
+      makeSet('big', 'Big', 100),
+      makeSet('small1', 'Bravo', 2),
+      makeSet('small2', 'Alpha', 2),
+    ];
+    const rows = computeBySet(items, sets);
+    expect(rows.map((r) => r.setCode)).toEqual(['small2', 'small1', 'big']); // Alpha before Bravo
+  });
+
+  it('emits a row for sets it cannot resolve, with completion 0', () => {
+    const rows = computeBySet([fromSet('x', 'x', 'unknown')], []);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.totalCards).toBe(0);
+    expect(rows[0]!.completion).toBe(0);
+    expect(rows[0]!.ownedUnique).toBe(1);
+  });
+
+  it('joins case-insensitively (legacy seed uses uppercase, Scryfall is lowercase)', () => {
+    const rows = computeBySet([fromSet('a', 'a', 'M21')], [makeSet('m21', 'Core 2021', 274)]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.setName).toBe('Core 2021');
+    expect(rows[0]!.totalCards).toBe(274);
+    expect(rows[0]!.completion).toBeCloseTo(1 / 274);
   });
 });
