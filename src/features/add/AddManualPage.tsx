@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X } from 'lucide-react';
+import { Check, Search as SearchIcon, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, Input, PageHeader, Skeleton } from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  Input,
+  PageHeader,
+  Skeleton,
+  Switch,
+  useToast,
+} from '@/shared/ui';
 import { useOwnedCounts } from '@/features/collection';
 import {
   AddToCollectionSheet,
@@ -14,8 +22,15 @@ import type { Card } from '@/shared/domain';
 export function AddManualPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { show } = useToast();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Card | null>(null);
+  // Series mode: when on, after each successful add we stay on this page so
+  // the user can chain entries. Off by default — single-shot is the common
+  // case. Counter only shown when seriesMode is on AND at least one card has
+  // been added in this page session.
+  const [seriesMode, setSeriesMode] = useState(false);
+  const [seriesCount, setSeriesCount] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-focus per design spec #37: "Focus auto sur le champ à l'arrivée."
@@ -28,6 +43,32 @@ export function AddManualPage() {
   const ownedCounts = useOwnedCounts();
   const trimmed = query.trim();
   const showSuggestions = trimmed.length < 2;
+
+  function handleAdded() {
+    if (seriesMode) {
+      setSeriesCount((c) => c + 1);
+      setQuery('');
+      // Defer the focus call so it lands after Vaul's close transition; if
+      // we focus while the sheet is still tearing down, Radix's focus-trap
+      // wrestles control back.
+      requestAnimationFrame(() => inputRef.current?.focus());
+      return;
+    }
+    navigate('/');
+  }
+
+  function handleFinish() {
+    if (seriesCount > 0) {
+      show({
+        title: t('add.manual.series.finishToastTitle'),
+        description: t('add.manual.series.finishToastDescription', { count: seriesCount }),
+        tone: 'success',
+      });
+    }
+    navigate('/');
+  }
+
+  const showCounter = seriesMode && seriesCount > 0;
 
   return (
     <>
@@ -68,6 +109,27 @@ export function AddManualPage() {
           ) : null}
         </div>
       </form>
+
+      <div className="flex items-center justify-between gap-3 px-3 py-2">
+        <label className="flex items-center gap-2 text-sm">
+          <Switch
+            checked={seriesMode}
+            onCheckedChange={setSeriesMode}
+            aria-label={t('add.manual.series.toggleLabel')}
+          />
+          <span>{t('add.manual.series.toggleLabel')}</span>
+        </label>
+        {showCounter ? (
+          <span
+            role="status"
+            aria-live="polite"
+            className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success"
+          >
+            <Check className="h-3 w-3" aria-hidden="true" />
+            {t('add.manual.series.counter', { count: seriesCount })}
+          </span>
+        ) : null}
+      </div>
 
       {showSuggestions ? (
         <EmptyState
@@ -114,6 +176,14 @@ export function AddManualPage() {
         </>
       )}
 
+      {showCounter ? (
+        <div className="sticky bottom-0 z-10 mt-4 border-t border-border bg-bg/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
+          <Button fullWidth onClick={handleFinish}>
+            {t('add.manual.series.finish', { count: seriesCount })}
+          </Button>
+        </div>
+      ) : null}
+
       {selected ? (
         <AddToCollectionSheet
           open={!!selected}
@@ -121,7 +191,7 @@ export function AddManualPage() {
             if (!open) setSelected(null);
           }}
           card={selected}
-          onAdded={() => navigate('/')}
+          onAdded={handleAdded}
         />
       ) : null}
     </>

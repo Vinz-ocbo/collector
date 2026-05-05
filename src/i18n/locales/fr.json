@@ -416,7 +416,17 @@
       "ariaLabel": "Rechercher dans le catalogue",
       "placeholder": "Nom de la carte…",
       "promptTitle": "Trouvez votre carte",
-      "promptDescription": "Tapez au moins 2 caractères pour rechercher dans le catalogue."
+      "promptDescription": "Tapez au moins 2 caractères pour rechercher dans le catalogue.",
+      "series": {
+        "toggleLabel": "Mode série",
+        "counter_one": "{{count}} carte ajoutée",
+        "counter_other": "{{count}} cartes ajoutées",
+        "finish_one": "Terminer ({{count}} carte)",
+        "finish_other": "Terminer ({{count}} cartes)",
+        "finishToastTitle": "Session terminée",
+        "finishToastDescription_one": "{{count}} carte ajoutée à votre collection",
+        "finishToastDescription_other": "{{count}} cartes ajoutées à votre collection"
+      }
     }
   },
   "profile": {

@@ -416,7 +416,17 @@
       "ariaLabel": "Search the catalog",
       "placeholder": "Card name…",
       "promptTitle": "Find your card",
-      "promptDescription": "Type at least 2 characters to search the catalog."
+      "promptDescription": "Type at least 2 characters to search the catalog.",
+      "series": {
+        "toggleLabel": "Series mode",
+        "counter_one": "{{count}} card added",
+        "counter_other": "{{count}} cards added",
+        "finish_one": "Done ({{count}} card)",
+        "finish_other": "Done ({{count}} cards)",
+        "finishToastTitle": "Session finished",
+        "finishToastDescription_one": "{{count}} card added to your collection",
+        "finishToastDescription_other": "{{count}} cards added to your collection"
+      }
     }
   },
   "profile": {
