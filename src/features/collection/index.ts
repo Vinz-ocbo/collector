@@ -17,6 +17,8 @@ export {
   useCreateBinder,
   useUpdateBinder,
   useDeleteBinder,
+  useReorderBinders,
+  useEmptyBinder,
   useSeedDemoData,
   useCollectionViewPrefs,
   useSaveCollectionViewPrefs,

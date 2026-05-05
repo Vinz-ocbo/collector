@@ -6,11 +6,13 @@ import {
   createBinder,
   deleteBinder,
   deleteItem,
+  emptyBinder,
   getItem,
   getSummary,
   listBinderSummaries,
   listBinders,
   listItems,
+  reorderBinders,
   seedDemoData,
   updateBinder,
   updateItem,
@@ -162,7 +164,6 @@ describe('collection repository', () => {
     const id = await createBinder({
       name: 'Deck Yuriko',
       icon: '📕',
-      position: 0,
     });
     const list = await listBinders();
     expect(list).toHaveLength(1);
@@ -170,7 +171,7 @@ describe('collection repository', () => {
   });
 
   it('updates a binder', async () => {
-    const id = await createBinder({ name: 'Old', icon: 'deck', position: 0 });
+    const id = await createBinder({ name: 'Old', icon: 'deck' });
     await updateBinder(id, { name: 'New', description: 'Notes' });
     const list = await listBinders();
     expect(list[0]!.name).toBe('New');
@@ -181,7 +182,7 @@ describe('collection repository', () => {
     const cards = buildSeedCards();
     await upsertCards(cards);
     const card = cards[0]!;
-    const binderId = await createBinder({ name: 'Trade', icon: 'trade', position: 0 });
+    const binderId = await createBinder({ name: 'Trade', icon: 'trade' });
     await addItem({
       cardId: card.id,
       game: 'magic',
@@ -205,7 +206,7 @@ describe('collection repository', () => {
     const cards = buildSeedCards();
     await upsertCards(cards);
     const card = cards[0]!;
-    const binderId = await createBinder({ name: 'Cube', icon: 'cube', position: 0 });
+    const binderId = await createBinder({ name: 'Cube', icon: 'cube' });
     await addItem({
       cardId: card.id,
       game: 'magic',
@@ -220,5 +221,57 @@ describe('collection repository', () => {
     expect(summaries[0]!.binder.id).toBe(binderId);
     expect(summaries[0]!.totalQuantity).toBe(3);
     expect(summaries[0]!.itemCount).toBe(1);
+  });
+
+  it('auto-assigns increasing positions on createBinder', async () => {
+    const a = await createBinder({ name: 'A', icon: 'deck' });
+    const b = await createBinder({ name: 'B', icon: 'deck' });
+    const c = await createBinder({ name: 'C', icon: 'deck' });
+    const list = await listBinders();
+    const positions = new Map(list.map((bi) => [bi.id, bi.position]));
+    expect(positions.get(a)).toBe(0);
+    expect(positions.get(b)).toBe(1);
+    expect(positions.get(c)).toBe(2);
+  });
+
+  it('reorders binders by id list', async () => {
+    const a = await createBinder({ name: 'A', icon: 'deck' });
+    const b = await createBinder({ name: 'B', icon: 'deck' });
+    const c = await createBinder({ name: 'C', icon: 'deck' });
+    await reorderBinders([c, a, b]);
+    const list = await listBinders();
+    expect(list.map((bi) => bi.id)).toEqual([c, a, b]);
+  });
+
+  it('reorder preserves binders missing from the input by appending them', async () => {
+    const a = await createBinder({ name: 'A', icon: 'deck' });
+    const b = await createBinder({ name: 'B', icon: 'deck' });
+    const c = await createBinder({ name: 'C', icon: 'deck' });
+    await reorderBinders([c]);
+    const list = await listBinders();
+    // c first (explicit), then a and b in their original relative order
+    expect(list.map((bi) => bi.id)).toEqual([c, a, b]);
+  });
+
+  it('emptyBinder orphans items (binderId becomes null) but keeps the binder', async () => {
+    const cards = buildSeedCards();
+    await upsertCards(cards);
+    const card = cards[0]!;
+    const binderId = await createBinder({ name: 'For sale', icon: 'sale' });
+    await addItem({
+      cardId: card.id,
+      game: 'magic',
+      quantity: 2,
+      condition: 'NM',
+      foil: false,
+      language: 'en',
+      binderId,
+    });
+    const result = await emptyBinder(binderId);
+    expect(result.orphaned).toBe(1);
+    expect(await listBinders()).toHaveLength(1);
+    const items = await listItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]!.binderId).toBeNull();
   });
 });

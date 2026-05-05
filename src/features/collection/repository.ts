@@ -207,12 +207,66 @@ export async function getOwnedCountByCardId(): Promise<Map<string, number>> {
 }
 
 export async function createBinder(
-  input: Omit<Binder, 'id' | 'createdAt' | 'updatedAt'>,
+  input: Omit<Binder, 'id' | 'createdAt' | 'updatedAt' | 'position'>,
 ): Promise<string> {
   const now = new Date().toISOString();
   const id = newId();
-  await db.binders.add({ ...input, id, createdAt: now, updatedAt: now });
+  // Assign the next position so new binders land at the end of the list.
+  // Reading max+1 inside the same write transaction would be ideal but Dexie
+  // lacks a max() — orderBy is fine and the race window is negligible for
+  // single-user local writes.
+  const existing = await db.binders.orderBy('position').last();
+  const position = existing ? existing.position + 1 : 0;
+  await db.binders.add({ ...input, id, position, createdAt: now, updatedAt: now });
   return id;
+}
+
+/**
+ * Reorders binders to match the provided id order. Each binder gets its index
+ * as its `position`. Unknown ids are ignored, missing ids keep their previous
+ * position appended at the end (so partial calls don't lose binders).
+ */
+export async function reorderBinders(orderedIds: string[]): Promise<void> {
+  return db.transaction('rw', db.binders, async () => {
+    const all = await db.binders.toArray();
+    const knownIds = new Set(all.map((b) => b.id));
+    const positions = new Map<string, number>();
+    let next = 0;
+    for (const id of orderedIds) {
+      if (!knownIds.has(id) || positions.has(id)) continue;
+      positions.set(id, next++);
+    }
+    // Append any binder we weren't told about, preserving their relative order.
+    const remaining = all
+      .filter((b) => !positions.has(b.id))
+      .sort((a, b) => a.position - b.position);
+    for (const binder of remaining) positions.set(binder.id, next++);
+
+    const now = new Date().toISOString();
+    for (const binder of all) {
+      const pos = positions.get(binder.id);
+      if (pos === undefined || pos === binder.position) continue;
+      await db.binders.update(binder.id, { position: pos, updatedAt: now });
+    }
+  });
+}
+
+/**
+ * Empties a binder: every item that referenced it is orphaned (binderId
+ * becomes null) but the binder itself is preserved. Returns how many items
+ * were orphaned so the UI can show a meaningful toast.
+ */
+export async function emptyBinder(id: string): Promise<{ orphaned: number }> {
+  return db.transaction('rw', db.binders, db.items, async () => {
+    const exists = await db.binders.get(id);
+    if (!exists) throw new Error(`Binder ${id} not found`);
+    const orphans = await db.items.where('binderId').equals(id).toArray();
+    const now = new Date().toISOString();
+    for (const item of orphans) {
+      await db.items.update(item.id, { binderId: null, updatedAt: now, syncStatus: 'pending' });
+    }
+    return { orphaned: orphans.length };
+  });
 }
 
 export async function getBinder(id: string): Promise<Binder | null> {

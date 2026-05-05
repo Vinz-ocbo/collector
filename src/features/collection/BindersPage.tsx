@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Library, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Eraser,
+  Library,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
@@ -16,6 +25,8 @@ import {
   useBinderSummaries,
   useCollectionSummary,
   useDeleteBinder,
+  useEmptyBinder,
+  useReorderBinders,
 } from './hooks';
 import { binderIconEmoji } from './binderIcons';
 import type { BinderSummary } from './repository';
@@ -26,11 +37,17 @@ export function BindersPage() {
   const summaries = useBinderSummaries();
   const overall = useCollectionSummary();
   const deleteBinder = useDeleteBinder();
+  const reorderBinders = useReorderBinders();
+  const emptyBinder = useEmptyBinder();
   const { show } = useToast();
   const [menuTarget, setMenuTarget] = useState<BinderSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BinderSummary | null>(null);
+  const [emptyTarget, setEmptyTarget] = useState<BinderSummary | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   const isPending = summaries.isPending || overall.isPending;
+  const rows = summaries.data ?? [];
+  const hasBinders = rows.length > 0;
 
   function handleConfirmDelete() {
     if (!deleteTarget) return;
@@ -48,12 +65,48 @@ export function BindersPage() {
     });
   }
 
+  function handleConfirmEmpty() {
+    if (!emptyTarget) return;
+    const target = emptyTarget;
+    void emptyBinder.mutateAsync({ id: target.binder.id }).then(({ orphaned }) => {
+      setEmptyTarget(null);
+      show({
+        title: t('collection.binders.emptiedToast.title'),
+        description: t('collection.binders.emptiedToast.description', {
+          name: target.binder.name,
+          count: orphaned,
+        }),
+        tone: 'success',
+      });
+    });
+  }
+
+  function move(index: number, direction: -1 | 1) {
+    const next = index + direction;
+    if (next < 0 || next >= rows.length) return;
+    const reordered = rows.map((row) => row.binder.id);
+    [reordered[index], reordered[next]] = [reordered[next]!, reordered[index]!];
+    reorderBinders.mutate(reordered);
+  }
+
   return (
     <>
       <PageHeader
         title={t('collection.binders.title')}
         onBack={() => navigate('/profile')}
         sticky={false}
+        actions={
+          hasBinders ? (
+            <button
+              type="button"
+              onClick={() => setEditMode((value) => !value)}
+              aria-pressed={editMode}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-fg-muted hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              {editMode ? t('common.save') : t('collection.binders.edit')}
+            </button>
+          ) : null
+        }
       />
 
       {isPending ? (
@@ -93,50 +146,91 @@ export function BindersPage() {
             </Link>
           </li>
 
-          {summaries.data && summaries.data.length === 0 ? (
+          {!hasBinders ? (
             <li className="p-6 text-center text-sm text-fg-muted">
               {t('collection.binders.emptyHint')}
             </li>
           ) : null}
 
-          {summaries.data?.map((row) => (
+          {rows.map((row, index) => (
             <li key={row.binder.id} className="flex items-center">
-              <Link
-                to={`/?binderId=${encodeURIComponent(row.binder.id)}`}
-                className="flex flex-1 items-center gap-3 p-4 hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <span aria-hidden="true" className="text-2xl">
-                  {binderIconEmoji(row.binder.icon)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{row.binder.name}</p>
-                  <p className="truncate text-xs text-fg-muted">
-                    {t('collection.binders.itemSummary', {
-                      items: row.totalQuantity,
-                      value: formatEur(row.totalValueEur, i18n.language),
-                    })}
-                  </p>
-                  {row.binder.description ? (
-                    <p className="mt-0.5 truncate text-xs text-fg-muted">
-                      {row.binder.description}
+              {editMode ? (
+                <div className="flex flex-1 items-center gap-3 p-4">
+                  <span aria-hidden="true" className="text-2xl">
+                    {binderIconEmoji(row.binder.icon)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{row.binder.name}</p>
+                    <p className="truncate text-xs text-fg-muted">
+                      {t('collection.binders.itemSummary', {
+                        items: row.totalQuantity,
+                        value: formatEur(row.totalValueEur, i18n.language),
+                      })}
                     </p>
-                  ) : null}
+                  </div>
                 </div>
-              </Link>
-              <button
-                type="button"
-                aria-label={t('collection.binders.menuAria', { name: row.binder.name })}
-                onClick={() => setMenuTarget(row)}
-                className="mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-fg-muted hover:bg-fg/5 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <MoreVertical className="h-4 w-4" aria-hidden="true" />
-              </button>
+              ) : (
+                <Link
+                  to={`/?binderId=${encodeURIComponent(row.binder.id)}`}
+                  className="flex flex-1 items-center gap-3 p-4 hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <span aria-hidden="true" className="text-2xl">
+                    {binderIconEmoji(row.binder.icon)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{row.binder.name}</p>
+                    <p className="truncate text-xs text-fg-muted">
+                      {t('collection.binders.itemSummary', {
+                        items: row.totalQuantity,
+                        value: formatEur(row.totalValueEur, i18n.language),
+                      })}
+                    </p>
+                    {row.binder.description ? (
+                      <p className="mt-0.5 truncate text-xs text-fg-muted">
+                        {row.binder.description}
+                      </p>
+                    ) : null}
+                  </div>
+                </Link>
+              )}
+
+              {editMode ? (
+                <div className="mr-2 flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    aria-label={t('collection.binders.moveUp', { name: row.binder.name })}
+                    disabled={index === 0 || reorderBinders.isPending}
+                    onClick={() => move(index, -1)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-muted hover:bg-fg/5 hover:text-fg disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t('collection.binders.moveDown', { name: row.binder.name })}
+                    disabled={index === rows.length - 1 || reorderBinders.isPending}
+                    onClick={() => move(index, 1)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-muted hover:bg-fg/5 hover:text-fg disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={t('collection.binders.menuAria', { name: row.binder.name })}
+                  onClick={() => setMenuTarget(row)}
+                  className="mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-fg-muted hover:bg-fg/5 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <MoreVertical className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
             </li>
           ))}
         </ul>
       )}
 
-      {!isPending && (!summaries.data || summaries.data.length === 0) ? (
+      {!isPending && !hasBinders ? (
         <div className="p-4">
           <EmptyState
             icon={<Library className="h-10 w-10" />}
@@ -151,12 +245,14 @@ export function BindersPage() {
         </div>
       ) : null}
 
-      <FAB
-        ariaLabel={t('collection.binders.create')}
-        onClick={() => navigate('/collection/binders/new')}
-      >
-        <Plus className="h-6 w-6" aria-hidden="true" />
-      </FAB>
+      {!editMode ? (
+        <FAB
+          ariaLabel={t('collection.binders.create')}
+          onClick={() => navigate('/collection/binders/new')}
+        >
+          <Plus className="h-6 w-6" aria-hidden="true" />
+        </FAB>
+      ) : null}
 
       <BottomSheet
         open={menuTarget !== null}
@@ -185,6 +281,21 @@ export function BindersPage() {
             <li>
               <button
                 type="button"
+                disabled={menuTarget.totalQuantity === 0}
+                onClick={() => {
+                  const target = menuTarget;
+                  setMenuTarget(null);
+                  setEmptyTarget(target);
+                }}
+                className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-medium hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <Eraser className="h-4 w-4 text-fg-muted" aria-hidden="true" />
+                {t('collection.binders.empty')}
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
                 onClick={() => {
                   const target = menuTarget;
                   setMenuTarget(null);
@@ -199,6 +310,26 @@ export function BindersPage() {
           </ul>
         ) : null}
       </BottomSheet>
+
+      <AlertDialog
+        open={emptyTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEmptyTarget(null);
+        }}
+        title={t('collection.binders.emptyConfirmTitle')}
+        description={
+          emptyTarget
+            ? t('collection.binders.emptyConfirmDescription', {
+                name: emptyTarget.binder.name,
+                count: emptyTarget.totalQuantity,
+              })
+            : ''
+        }
+        confirmLabel={
+          emptyBinder.isPending ? t('common.loading') : t('collection.binders.emptyConfirm')
+        }
+        onConfirm={handleConfirmEmpty}
+      />
 
       <AlertDialog
         open={deleteTarget !== null}

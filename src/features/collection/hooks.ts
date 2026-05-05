@@ -4,6 +4,7 @@ import {
   createBinder,
   deleteBinder,
   deleteItem,
+  emptyBinder,
   getBinder,
   getItem,
   getOwnedCountByCardId,
@@ -11,6 +12,7 @@ import {
   listBinderSummaries,
   listBinders,
   listItems,
+  reorderBinders,
   seedDemoData,
   updateBinder,
   updateItem,
@@ -132,9 +134,24 @@ export function useCreateBinder() {
       createBinder({
         name,
         icon,
-        position: 0,
         ...(description ? { description } : {}),
       }),
+    onSuccess: () => invalidateCollection(qc),
+  });
+}
+
+export function useReorderBinders() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, string[]>({
+    mutationFn: (orderedIds) => reorderBinders(orderedIds),
+    onSuccess: () => invalidateCollection(qc),
+  });
+}
+
+export function useEmptyBinder() {
+  const qc = useQueryClient();
+  return useMutation<{ orphaned: number }, Error, { id: string }>({
+    mutationFn: ({ id }) => emptyBinder(id),
     onSuccess: () => invalidateCollection(qc),
   });
 }
