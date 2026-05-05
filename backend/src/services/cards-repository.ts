@@ -101,6 +101,16 @@ export function createCardsRepository(db: Db): CardsRepository {
         const combined = or(...clauses);
         if (combined) conditions.push(combined);
       }
+      // Price bounds. `price_eur` is stored as TEXT (Scryfall ships strings),
+      // so we cast to numeric per-comparison. Cards with NULL price are
+      // dropped when either bound is set — a missing price can't satisfy a
+      // numeric bound.
+      if (input.priceMin !== undefined) {
+        conditions.push(sql`${cards.priceEur}::numeric >= ${input.priceMin}`);
+      }
+      if (input.priceMax !== undefined) {
+        conditions.push(sql`${cards.priceEur}::numeric <= ${input.priceMax}`);
+      }
 
       const where = and(...conditions);
 

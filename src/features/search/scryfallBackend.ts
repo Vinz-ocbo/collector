@@ -72,6 +72,8 @@ export function createScryfallSearchBackend(opts: ScryfallSearchBackendOptions):
       if (filter?.setCodes?.length) params.set('setCodes', filter.setCodes.join(','));
       if (filter?.rarities?.length) params.set('rarities', filter.rarities.join(','));
       if (filter?.colors?.length) params.set('colors', filter.colors.join(','));
+      if (filter?.priceMin !== undefined) params.set('priceMin', String(filter.priceMin));
+      if (filter?.priceMax !== undefined) params.set('priceMax', String(filter.priceMax));
 
       const data = await call<ApiSearchResult>(`/v1/cards/search?${params.toString()}`);
 

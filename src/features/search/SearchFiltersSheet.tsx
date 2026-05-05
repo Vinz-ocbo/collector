@@ -171,6 +171,59 @@ export function SearchFiltersSheet({
           </div>
         </Section>
 
+        <Section title={t('search.filters.price')}>
+          <div className="flex items-center gap-2">
+            <label className="flex-1 text-sm">
+              <span className="mb-1 block text-xs text-fg-muted">
+                {t('search.filters.priceMin')}
+              </span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.5}
+                value={draft.priceMin ?? ''}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  const parsed = raw === '' ? undefined : Number(raw);
+                  setDraft((d) => ({
+                    ...d,
+                    priceMin: parsed !== undefined && !Number.isNaN(parsed) ? parsed : undefined,
+                  }));
+                }}
+                placeholder="0"
+                aria-label={t('search.filters.priceMinAria')}
+              />
+            </label>
+            <span aria-hidden="true" className="pt-5 text-fg-muted">
+              –
+            </span>
+            <label className="flex-1 text-sm">
+              <span className="mb-1 block text-xs text-fg-muted">
+                {t('search.filters.priceMax')}
+              </span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.5}
+                value={draft.priceMax ?? ''}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  const parsed = raw === '' ? undefined : Number(raw);
+                  setDraft((d) => ({
+                    ...d,
+                    priceMax: parsed !== undefined && !Number.isNaN(parsed) ? parsed : undefined,
+                  }));
+                }}
+                placeholder="∞"
+                aria-label={t('search.filters.priceMaxAria')}
+              />
+            </label>
+          </div>
+          <p className="mt-1 text-[11px] text-fg-muted">{t('search.filters.priceHint')}</p>
+        </Section>
+
         <Section>
           <label className="flex items-center justify-between gap-3 text-sm">
             <span>{t('search.filters.hideOwned')}</span>

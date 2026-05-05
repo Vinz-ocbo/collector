@@ -14,6 +14,10 @@ export type SearchFilter = {
   setCodes?: string[] | undefined;
   rarities?: Card['rarity'][] | undefined;
   colors?: string[] | undefined;
+  /** Inclusive lower bound on `prices.eur`, in EUR. Cards without a price are excluded when either bound is set. */
+  priceMin?: number | undefined;
+  /** Inclusive upper bound on `prices.eur`, in EUR. */
+  priceMax?: number | undefined;
   /** Hide cards already owned by the current user. */
   hideOwned?: boolean | undefined;
 };

@@ -37,6 +37,8 @@ function isFilterEmpty(filter: SearchFilter): boolean {
     !filter.colors?.length &&
     !filter.rarities?.length &&
     !filter.setCodes?.length &&
+    filter.priceMin === undefined &&
+    filter.priceMax === undefined &&
     !filter.hideOwned
   );
 }
@@ -86,6 +88,22 @@ export function SearchPage() {
         label,
         ariaLabel: t('search.filters.removeChip', { label }),
         clear: () => ({ ...filter, setCodes: undefined }),
+      });
+    }
+    if (filter.priceMin !== undefined || filter.priceMax !== undefined) {
+      const min = filter.priceMin;
+      const max = filter.priceMax;
+      const label =
+        min !== undefined && max !== undefined
+          ? t('search.filters.chipPriceRange', { min, max })
+          : min !== undefined
+            ? t('search.filters.chipPriceMin', { min })
+            : t('search.filters.chipPriceMax', { max: max ?? 0 });
+      chips.push({
+        key: 'price',
+        label,
+        ariaLabel: t('search.filters.removeChip', { label }),
+        clear: () => ({ ...filter, priceMin: undefined, priceMax: undefined }),
       });
     }
     if (filter.hideOwned) {
@@ -269,3 +287,4 @@ export function SearchPage() {
     </>
   );
 }
+

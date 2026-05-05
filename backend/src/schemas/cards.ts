@@ -31,6 +31,10 @@ export const searchQuerySchema = z.object({
   rarities: csvList,
   /** Comma-separated single-letter colors (W/U/B/R/G/C) — e.g. `colors=R,U`. */
   colors: csvList,
+  /** Inclusive lower bound on `prices.eur`, in EUR. Cards without a price are filtered out when either bound is set. */
+  priceMin: z.coerce.number().min(0).optional(),
+  /** Inclusive upper bound on `prices.eur`, in EUR. */
+  priceMax: z.coerce.number().min(0).optional(),
 });
 
 export type SearchSort = z.infer<typeof searchSortSchema>;

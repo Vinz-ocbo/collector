@@ -82,4 +82,33 @@ describe('mockSearchBackend', () => {
     expect(result.cards).toHaveLength(3);
     expect(result.total).toBeGreaterThan(3);
   });
+
+  it('respects priceMin / priceMax bounds and excludes priceless cards', async () => {
+    await seedDemoData();
+    const backend = createMockSearchBackend();
+    const all = await backend.searchCards({ query: '' });
+    expect(all.total).toBeGreaterThan(0);
+
+    const cheap = await backend.searchCards({ query: '', filter: { priceMax: 1 } });
+    for (const card of cheap.cards) {
+      expect(card.prices.eur).toBeDefined();
+      expect(card.prices.eur!).toBeLessThanOrEqual(1);
+    }
+
+    const expensive = await backend.searchCards({ query: '', filter: { priceMin: 10 } });
+    for (const card of expensive.cards) {
+      expect(card.prices.eur).toBeDefined();
+      expect(card.prices.eur!).toBeGreaterThanOrEqual(10);
+    }
+
+    const range = await backend.searchCards({
+      query: '',
+      filter: { priceMin: 1, priceMax: 5 },
+    });
+    for (const card of range.cards) {
+      expect(card.prices.eur).toBeDefined();
+      expect(card.prices.eur!).toBeGreaterThanOrEqual(1);
+      expect(card.prices.eur!).toBeLessThanOrEqual(5);
+    }
+  });
 });

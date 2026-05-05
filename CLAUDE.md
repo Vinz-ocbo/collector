@@ -326,7 +326,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Real auth provider** — pick Auth0/Clerk/Supabase, write `createXxxAuthBackend()`, swap in `providers.tsx`. The mock is dev-only.
 - **OAuth buttons on Login/Signup** — currently stubs that show a "bientôt disponible" toast.
 - **Real Scryfall integration** ✅ — `createScryfallSearchBackend()` talks to the Fastify proxy. `providers.tsx` picks mock vs HTTP based on `VITE_API_BASE_URL`. See the "Backend (Fastify + Postgres)" section below for setup.
-- **Search filters bottom sheet** ✅ — `SearchFiltersSheet.tsx` (color / rarity / set picker / hideOwned). Active-filter chips on `SearchPage`. Price filter still TBD.
+- **Search filters bottom sheet** ✅ — `SearchFiltersSheet.tsx` (color / rarity / set picker / **price range (EUR min/max)** / hideOwned). Active-filter chips on `SearchPage`, including a price chip that summarizes the bounds. Price filter is wired end-to-end: backend Drizzle repo casts the TEXT-stored `price_eur` to numeric for the comparison, the Scryfall fallback path uses `eur>=N` / `eur<=N` query syntax, and the frontend mock filters in-memory. Cards without a price are excluded as soon as either bound is set.
 - **Image fullscreen overlay** ✅ — `CardImageZoom` (Radix Dialog) wired on both Catalog detail and Item detail. Tap the card image to open; close via backdrop / Esc / X.
 - **Other printings** ✅ — section on the catalog detail page lists all other printings of the same card name (`useOtherPrintings`). Tap to navigate. Rulings (#27) still TBD.
 - **Scan feature (camera + OCR)** — separate large feature.

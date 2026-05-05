@@ -143,6 +143,10 @@ export type SearchCardsInput = {
   setCodes?: string[] | undefined;
   rarities?: string[] | undefined;
   colors?: string[] | undefined;
+  /** Inclusive lower bound on `prices.eur`, in EUR. */
+  priceMin?: number | undefined;
+  /** Inclusive upper bound on `prices.eur`, in EUR. */
+  priceMax?: number | undefined;
 };
 
 export type ScryfallClient = {
@@ -198,6 +202,10 @@ export function composeQuery(input: SearchCardsInput): string {
   ors('set', input.setCodes);
   ors('r', input.rarities);
   ors('c', input.colors);
+  // Scryfall syntax: `eur>=N` and `eur<=N`. Cards without an EUR price are
+  // excluded from the result automatically.
+  if (input.priceMin !== undefined) parts.push(`eur>=${input.priceMin}`);
+  if (input.priceMax !== undefined) parts.push(`eur<=${input.priceMax}`);
   return parts.join(' ');
 }
 

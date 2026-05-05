@@ -44,6 +44,14 @@ function passesFilter(
       return false;
     }
   }
+  if (filter.priceMin !== undefined || filter.priceMax !== undefined) {
+    // Cards without a price can't satisfy a numeric bound — exclude them when
+    // either end is set, mirroring the backend's behaviour.
+    const eur = card.prices.eur;
+    if (eur === undefined) return false;
+    if (filter.priceMin !== undefined && eur < filter.priceMin) return false;
+    if (filter.priceMax !== undefined && eur > filter.priceMax) return false;
+  }
   if (filter.hideOwned && ownedIds.has(card.id)) return false;
   return true;
 }

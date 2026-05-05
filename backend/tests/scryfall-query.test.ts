@@ -28,6 +28,14 @@ describe('composeQuery', () => {
     });
     expect(composed).toBe('shock (r:common)');
   });
+
+  it('appends eur>= and eur<= for price bounds', () => {
+    expect(composeQuery({ q: 'bolt', page: 1, limit: 20, priceMin: 1, priceMax: 50 })).toBe(
+      'bolt eur>=1 eur<=50',
+    );
+    expect(composeQuery({ q: 'bolt', page: 1, limit: 20, priceMin: 5 })).toBe('bolt eur>=5');
+    expect(composeQuery({ q: 'bolt', page: 1, limit: 20, priceMax: 10 })).toBe('bolt eur<=10');
+  });
 });
 
 describe('sortToScryfall', () => {
