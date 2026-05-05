@@ -6,6 +6,7 @@ import {
   AlertDialog,
   Badge,
   Button,
+  CardImageZoom,
   CardThumbnail,
   PageHeader,
   Skeleton,
@@ -21,6 +22,7 @@ export function ItemDetailPage() {
   const deleteItem = useDeleteItem();
   const { show } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   if (!id) return <Navigate to="/" replace />;
 
@@ -78,9 +80,14 @@ export function ItemDetailPage() {
     <>
       <PageHeader title={card.name} onBack={() => navigate(-1)} />
       <article className="flex flex-col gap-6 p-4">
-        <div className="mx-auto">
+        <button
+          type="button"
+          onClick={() => setZoomOpen(true)}
+          aria-label={t('common.zoomImage')}
+          className="mx-auto rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
           <CardThumbnail card={card} size="lg" quality="large" />
-        </div>
+        </button>
 
         <section className="rounded-md border border-border bg-bg-raised p-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-fg-muted">
@@ -184,6 +191,12 @@ export function ItemDetailPage() {
         }
         destructive
         onConfirm={() => void handleDelete()}
+      />
+      <CardImageZoom
+        open={zoomOpen}
+        onOpenChange={setZoomOpen}
+        card={card}
+        closeLabel={t('common.close')}
       />
     </>
   );

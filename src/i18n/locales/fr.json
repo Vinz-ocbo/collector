@@ -15,7 +15,8 @@
     "no": "Non",
     "search": "Rechercher",
     "clear": "Effacer",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "zoomImage": "Voir l’image en grand"
   },
   "tabs": {
     "collection": "Collection",

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Library, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, CardThumbnail, PageHeader, Skeleton } from '@/shared/ui';
+import { Button, CardImageZoom, CardThumbnail, PageHeader, Skeleton } from '@/shared/ui';
 import { useOwnedCounts } from '@/features/collection';
 import { useCatalogCard } from './hooks';
 import { AddToCollectionSheet } from './AddToCollectionSheet';
@@ -14,6 +14,7 @@ export function CatalogCardDetailPage() {
   const card = useCatalogCard(id);
   const ownedCounts = useOwnedCounts();
   const [addOpen, setAddOpen] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   if (card.isPending || !id) {
     return (
@@ -60,9 +61,14 @@ export function CatalogCardDetailPage() {
     <>
       <PageHeader title={data.name} onBack={() => navigate(-1)} />
       <article className="flex flex-col gap-6 p-4">
-        <div className="mx-auto">
+        <button
+          type="button"
+          onClick={() => setZoomOpen(true)}
+          aria-label={t('common.zoomImage')}
+          className="mx-auto rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
           <CardThumbnail card={data} size="lg" quality="large" />
-        </div>
+        </button>
 
         {owned > 0 ? (
           <section className="rounded-md border border-success/30 bg-success-bg p-3 text-success">
@@ -126,6 +132,12 @@ export function CatalogCardDetailPage() {
       </article>
 
       <AddToCollectionSheet open={addOpen} onOpenChange={setAddOpen} card={data} />
+      <CardImageZoom
+        open={zoomOpen}
+        onOpenChange={setZoomOpen}
+        card={data}
+        closeLabel={t('common.close')}
+      />
     </>
   );
 }

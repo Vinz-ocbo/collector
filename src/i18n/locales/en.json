@@ -15,7 +15,8 @@
     "no": "No",
     "search": "Search",
     "clear": "Clear",
-    "retry": "Retry"
+    "retry": "Retry",
+    "zoomImage": "View image full screen"
   },
   "tabs": {
     "collection": "Collection",

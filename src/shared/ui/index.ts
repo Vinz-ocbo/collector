@@ -3,6 +3,7 @@ export { Badge, badgeVariants, type BadgeProps } from './Badge';
 export { BottomSheet, type BottomSheetProps } from './BottomSheet';
 export { Button, buttonVariants, type ButtonProps } from './Button';
 export { Card, cardVariants, type CardProps } from './Card';
+export { CardImageZoom, type CardImageZoomProps } from './CardImageZoom';
 export { CardThumbnail, cardThumbnailVariants, type CardThumbnailProps } from './CardThumbnail';
 export { Chip, chipVariants, type ChipProps } from './Chip';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
