@@ -290,7 +290,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Stats deeplink to Collection** — clicking a color/type/rarity row should filter the Collection page. Currently the Collection page reads filter from local state, not from URL search params. Wire this when needed.
 - **Item add flow** (`/add/manual`, `/add/manual/details`, mode série) — designed but not implemented; depends on Search feature.
 - **Collection extras** — virtualization at 100+ items, long-press menu, pull-to-refresh. (Sort + view-mode prefs persisted in Dexie ✅; filter is URL-driven for deeplinks ✅.)
-- **i18n DONE** — all UI strings extracted (~250 keys, FR + EN). The remaining gap is a UI language switcher (currently respects `navigator.language` only); the design earmarks it for `/profile/preferences` (a stub today).
+- **i18n DONE** — all UI strings extracted (~250 keys, FR + EN). UI language switcher lives on the Profile page (`LanguageSwitcher.tsx`); persistence handled by `LanguageDetector`'s `localStorage` cache (`tcg-collector.lang`).
 - **Backend API** (Fastify/NestJS — separate repo or workspace).
 - **Sync layer** — `CollectionItem.syncStatus` is set to `'pending'` on writes but no sync queue exists yet.
 - **TanStack Query Devtools**, **Sentry / global error boundary**, **Husky/lint-staged**, **Lighthouse CI**.

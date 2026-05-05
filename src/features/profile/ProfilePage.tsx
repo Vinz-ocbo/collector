@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertDialog, Button, Card, PageHeader } from '@/shared/ui';
 import { useSession, useSignOut } from '@/features/auth';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function ProfilePage() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export function ProfilePage() {
           <p className="text-sm text-fg-muted">{t('profile.loggedInAs')}</p>
           <p className="mt-1 break-all font-medium">{session?.email ?? '—'}</p>
         </Card>
+
+        <LanguageSwitcher />
 
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-fg-muted">
