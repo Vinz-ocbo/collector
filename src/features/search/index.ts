@@ -4,6 +4,7 @@ export { SearchBackendProvider, useSearchBackend } from './SearchBackendProvider
 export {
   useSearchCards,
   useCatalogCard,
+  useOtherPrintings,
   useSets,
   useRecentSearches,
   usePushRecentSearch,

@@ -4,8 +4,9 @@ import { Library, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, CardImageZoom, CardThumbnail, PageHeader, Skeleton } from '@/shared/ui';
 import { useOwnedCounts } from '@/features/collection';
-import { useCatalogCard } from './hooks';
+import { useCatalogCard, useOtherPrintings } from './hooks';
 import { AddToCollectionSheet } from './AddToCollectionSheet';
+import type { Card } from '@/shared/domain';
 
 export function CatalogCardDetailPage() {
   const { t, i18n } = useTranslation();
@@ -131,6 +132,8 @@ export function CatalogCardDetailPage() {
         ) : null}
       </article>
 
+      <OtherPrintingsSection card={data} />
+
       <AddToCollectionSheet open={addOpen} onOpenChange={setAddOpen} card={data} />
       <CardImageZoom
         open={zoomOpen}
@@ -140,6 +143,67 @@ export function CatalogCardDetailPage() {
       />
     </>
   );
+}
+
+function OtherPrintingsSection({ card }: { card: Card }) {
+  const { t, i18n } = useTranslation();
+  const printings = useOtherPrintings(card);
+
+  // Hide the section entirely while loading or when there are zero results —
+  // rendering an empty heading would just be noise.
+  if (printings.isPending || !printings.data || printings.data.length === 0) {
+    return printings.isPending ? (
+      <section className="px-4 pb-4">
+        <Skeleton className="h-5 w-40" />
+        <div className="mt-3 flex gap-2 overflow-x-auto">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Skeleton key={idx} className="aspect-[5/7] w-24 shrink-0" />
+          ))}
+        </div>
+      </section>
+    ) : null;
+  }
+
+  return (
+    <section className="px-4 pb-4">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fg-muted">
+        {t('search.card.otherPrintings.heading', { count: printings.data.length })}
+      </h2>
+      <ul className="flex gap-2 overflow-x-auto pb-1">
+        {printings.data.map((other) => (
+          <li key={other.id} className="shrink-0">
+            <Link
+              to={`/search/cards/${other.id}`}
+              className="block w-24 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              aria-label={t('search.card.otherPrintings.itemAria', {
+                set: other.setName,
+                number: other.collectorNumber,
+              })}
+            >
+              <CardThumbnail card={other} size="md" />
+              <p className="mt-1 truncate text-xs font-medium">{other.setName}</p>
+              <p className="truncate text-[11px] uppercase text-fg-muted">
+                {other.setCode} · #{other.collectorNumber}
+              </p>
+              {other.prices.eur !== undefined ? (
+                <p className="text-[11px] tabular-nums text-fg-muted">
+                  {formatEurShort(other.prices.eur, i18n.language)}
+                </p>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function formatEurShort(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: value < 10 ? 2 : 0,
+  }).format(value);
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {

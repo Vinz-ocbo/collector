@@ -311,7 +311,12 @@
       "backToSearch": "Back to search",
       "addToCollection": "Add to collection",
       "characteristics": "Characteristics",
-      "notOwnedHint": "Not yet in your collection"
+      "notOwnedHint": "Not yet in your collection",
+      "otherPrintings": {
+        "heading_one": "{{count}} other printing",
+        "heading_other": "{{count}} other printings",
+        "itemAria": "View the {{set}} #{{number}} printing"
+      }
     },
     "addSheet": {
       "title": "Add to collection",

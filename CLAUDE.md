@@ -328,7 +328,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Real Scryfall integration** ✅ — `createScryfallSearchBackend()` talks to the Fastify proxy. `providers.tsx` picks mock vs HTTP based on `VITE_API_BASE_URL`. See the "Backend (Fastify + Postgres)" section below for setup.
 - **Search filters bottom sheet** ✅ — `SearchFiltersSheet.tsx` (color / rarity / set picker / hideOwned). Active-filter chips on `SearchPage`. Price filter still TBD.
 - **Image fullscreen overlay** ✅ — `CardImageZoom` (Radix Dialog) wired on both Catalog detail and Item detail. Tap the card image to open; close via backdrop / Esc / X.
-- **Other printings + rulings** — sub-routes designed (#26, #27) but not implemented.
+- **Other printings** ✅ — section on the catalog detail page lists all other printings of the same card name (`useOtherPrintings`). Tap to navigate. Rulings (#27) still TBD.
 - **Scan feature (camera + OCR)** — separate large feature.
 - **Binders UI** — repository + hooks support binders (`createBinder`, `listBinders`, `binderId` on items), but no dedicated UI yet (no `/collection/binders/*` routes). Filter by binder via the bottom sheet is also TBD.
 - **Stats — value-history** — overview/color/type/rarity/set are wired (set page uses backend `/v1/sets` for the denominator); the value-history line chart is still P2 (needs daily snapshots).

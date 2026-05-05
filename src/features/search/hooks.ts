@@ -56,6 +56,30 @@ export function useCatalogCard(id: string | undefined) {
 }
 
 /**
+ * All other printings of a card. Searches the catalogue by card name and
+ * filters to exact-name matches excluding the current card id. The backend
+ * search uses substring `ilike` so we always check the name in the client.
+ *
+ * Returns up to 50 other printings (default limit). Sorted by release date
+ * desc (newest first) by the time it lands here.
+ */
+export function useOtherPrintings(card: Pick<Card, 'id' | 'name'> | null | undefined) {
+  const backend = useSearchBackend();
+  const enabled = !!card;
+  return useQuery<Card[]>({
+    queryKey: ['search', 'otherPrintings', card?.id ?? null] as const,
+    queryFn: async (): Promise<Card[]> => {
+      if (!card) return [];
+      const result = await backend.searchCards({ query: card.name, limit: 50 });
+      return result.cards
+        .filter((c) => c.name === card.name && c.id !== card.id)
+        .sort((a, b) => (b.releasedAt ?? '').localeCompare(a.releasedAt ?? ''));
+    },
+    enabled,
+  });
+}
+
+/**
  * Sets list — used by the filter sheet's set picker. Cached for an hour
  * since sets rarely change; the backend already does its own LRU caching.
  */

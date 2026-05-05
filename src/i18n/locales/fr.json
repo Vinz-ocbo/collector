@@ -311,7 +311,12 @@
       "backToSearch": "Retour à la recherche",
       "addToCollection": "Ajouter à ma collection",
       "characteristics": "Caractéristiques",
-      "notOwnedHint": "Pas encore dans votre collection"
+      "notOwnedHint": "Pas encore dans votre collection",
+      "otherPrintings": {
+        "heading_one": "{{count}} autre impression",
+        "heading_other": "{{count}} autres impressions",
+        "itemAria": "Voir l’impression {{set}} #{{number}}"
+      }
     },
     "addSheet": {
       "title": "Ajouter à ma collection",
