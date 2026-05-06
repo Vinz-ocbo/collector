@@ -22,10 +22,11 @@ What's wired:
 - i18n (`src/i18n/`): i18next + LanguageDetector (localStorage → navigator), FR default + EN, fully type-safe via module augmentation, UI language switcher on Profile, all UI strings extracted (~250 keys) including Zod schema messages
 - Backend (`backend/`): Fastify + Drizzle + Postgres. Scryfall proxy with rate limit (8 req/s, identifiable User-Agent), bulk-ingest admin endpoint, OpenAPI/Swagger UI on `/docs`. DB optional — proxy-only mode when `DATABASE_URL` unset.
 - Top-level AppGate routes first-launch users to /onboarding
-- Tab-bar pages: Collection + Search + Stats real; Scan still stub
-- Bundle splitting: 6 vendor chunks via `manualChunks` — react/ui/data/i18n/forms separated from app code (initial JS ~22 KB gzip + react-vendor 67 KB cached separately). Total 222 KB gzip across 16 chunks; per-chunk budget 250 KB enforced by `npm run bundle:check`.
+- Tab-bar pages: Collection + Search + Stats + Scan (S1+S2) real
+- Bundle splitting: 7 vendor chunks via `manualChunks` — react/ui/data/i18n/form/ocr separated from app code. Total ~308 KB gzip across 21 chunks; per-chunk budget 250 KB gzip enforced by `npm run bundle:check`. Vite's default `chunkSizeWarningLimit` flags the main app chunk over 250 KB *raw* — gzip is what we actually budget against, so the warning is informational.
 - CI (`.github/workflows/ci.yml`): two jobs — `verify` (typecheck + lint + format:check + tests with coverage) and `build` (build + bundle:check). Triggers on push to main + PR. Uses Node 20 + npm cache.
-- 169 frontend tests passing (~9 s).
+- Scan (`src/features/scan/`): S1 (camera capture) + S2 (OCR via Tesseract.js) shipped. `useCamera` owns the MediaStream lifecycle, `captureFrame` snapshots the video to a JPEG Blob, `cropTopFraction` crops the top 25% (Magic title bar region), `recognizeCardText` runs OCR via a lazy-imported worker. UI states: streaming → captured → ocr idle/processing/done/error. S3 (Scryfall lookup on the OCR text → top-3 candidates → AddToCollectionSheet) is the next step.
+- 201 frontend tests passing (~10 s).
 
 ## Project at a glance
 
@@ -129,6 +130,10 @@ src/
                   hooks (memoized over useCollectionItems) + custom SVG
                   charts (DonutChart, BarChartHorizontal) + StatsPage +
                   ByColor/ByType/ByRarityPage
+    scan/         useCamera (MediaStream lifecycle) + captureFrame
+                  (video → JPEG Blob) + cropTopFraction (top 25% slice for
+                  the title region) + ocr (lazy tesseract.js worker) +
+                  ScanPage (camera → captured → OCR result UI)
   tcg/
     index.ts  TcgProvider interface + provider registry
     magic/    MagicMeta + magicProvider stub
@@ -236,9 +241,10 @@ Same pattern as Auth: a small `SearchBackend` interface (`src/features/search/ty
 | `data-vendor` | `@tanstack/react-query`, `dexie` | State + storage |
 | `i18n-vendor` | `i18next`, `react-i18next`, language detector | Translation runtime + (currently bundled) locales |
 | `form-vendor` | `react-hook-form`, `@hookform/resolvers`, `zod` | Form + validation |
+| `ocr-vendor` | `tesseract.js` | Heavy, lazy-loaded only on Scan — isolated so it never leaks via barrel imports |
 | `index-*` (per feature) | App code, lazy-loaded per route | One chunk per `lazy(() => import(...))` boundary |
 
-`scripts/check-bundle-size.mjs` (`npm run bundle:check`) enforces a **per-chunk gzipped budget of 250 KB** and exits 1 if any chunk exceeds. The total (currently ~222 KB gzip) is reported but not strictly capped — what matters is that no single chunk balloons.
+`scripts/check-bundle-size.mjs` (`npm run bundle:check`) enforces a **per-chunk gzipped budget of 250 KB** and exits 1 if any chunk exceeds. The total (currently ~308 KB gzip across 21 chunks) is reported but not strictly capped — what matters is that no single chunk balloons.
 
 To re-tune: edit `BUDGET_KB` in the script, or refine the chunking rules in `vite.config.ts`. If a vendor legitimately grows past budget (eg. ML libs for the scan feature), split it further (one chunk per heavy module).
 
@@ -330,7 +336,7 @@ Each TCG provides a `TcgProvider` adapter at `src/tcg/<game>/index.ts` and regis
 - **Search filters bottom sheet** ✅ — `SearchFiltersSheet.tsx` (color / rarity / set picker / **price range (EUR min/max)** / hideOwned). Active-filter chips on `SearchPage`, including a price chip that summarizes the bounds. Price filter is wired end-to-end: backend Drizzle repo casts the TEXT-stored `price_eur` to numeric for the comparison, the Scryfall fallback path uses `eur>=N` / `eur<=N` query syntax, and the frontend mock filters in-memory. Cards without a price are excluded as soon as either bound is set.
 - **Image fullscreen overlay** ✅ — `CardImageZoom` (Radix Dialog) wired on both Catalog detail and Item detail. Tap the card image to open; close via backdrop / Esc / X.
 - **Other printings + rulings** ✅ — sections on the catalog detail page. Other printings list all reprints of the same name (`useOtherPrintings`); rulings (`useCardRulings`) lists official Wizards / Scryfall rulings via the new `GET /v1/cards/:id/rulings` proxy route (LRU 24 h on the backend, 1 h `staleTime` on the client). Each section is hidden when the data is empty so cards without rulings stay clean.
-- **Scan feature (camera + OCR)** — separate large feature.
+- **Scan feature (camera + OCR)** — S1 ✅ camera capture (`useCamera`, `captureFrame`, `<video>` + 5:7 guide overlay, capture button, file-picker fallback for desktop/denied/unsupported). S2 ✅ OCR (`tesseract.js` lazy-imported in `ocr.ts`, `cropTopFraction` slices the top 25% of the captured image where the Magic title sits, recognized text + confidence shown in a result panel; `eng` is the only language for now, `fra` would add ~1 MB on first use). **S3 pending** = take the OCR text, send to `searchCards` via the existing Scryfall backend, render top-3 candidates with combined OCR×Scryfall confidence, tap a candidate → `<AddToCollectionSheet>`. The disabled "Rechercher (bientôt)" button on the OCR-done state is the entry point. Camera-only states are not unit-tested (jsdom can't supply MediaStream); rely on Playwright E2E later. Bundle: tesseract.js sits in its own `ocr-vendor` chunk via `manualChunks` so it never leaks into main; runtime WASM + language data come from Tesseract's CDN, cached by Tesseract in IndexedDB after first use.
 - **Binders UI** ✅ — `/collection/binders` lists every binder + a virtual "Toutes mes cartes" entry that links to the unfiltered Collection. Tap a binder → Collection deeplinked with `?binderId=...`. Each row has a kebab → bottom sheet with **Renommer / Vider / Supprimer**; delete orphans items (sets `binderId` to null) inside a Dexie transaction, and Vider does the same without removing the binder. A header **Modifier** button toggles edit mode, where each row exposes up/down arrow buttons that call `useReorderBinders` (no drag library — keyboard a11y comes for free). `createBinder` now auto-assigns the next position so new binders land at the end. `/collection/binders/new` and `/collection/binders/:id/edit` share `BinderFormPage` (name + description + 8-icon radiogroup). Long-press menu on a Collection item exposes **Déplacer dans un classeur** via `MoveToBinderSheet`. A custom binder-view header on the deeplinked Collection and backend sync of binders are still deferred. Entry point: Profile → Mes classeurs.
 - **Stats — value-history** — overview/color/type/rarity/set are wired (set page uses backend `/v1/sets` for the denominator); the value-history line chart is still P2 (needs daily snapshots).
 - **Stats deeplink to Collection** — clicking a color/type/rarity row should filter the Collection page. Currently the Collection page reads filter from local state, not from URL search params. Wire this when needed.
