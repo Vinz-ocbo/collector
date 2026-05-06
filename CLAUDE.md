@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `.clinerules-design` — UX/UI rules — **French**, authoritative for UI decisions
 - `SOURCES/Appli Magic Collector (specs).md` — functional MVP specs
 - `docs/design/` — concrete design artifacts (arborescence, wireframes ASCII, specs fonctionnelles per écran)
+- `docs/deploy.md` — Vercel + Render free-tier deployment walkthrough
 
 What's wired:
 - 15 design system components in `src/shared/ui/` (incl. CardThumbnail with 5:7 ratio + lazy loading)
