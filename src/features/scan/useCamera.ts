@@ -24,6 +24,7 @@ export function useCamera(): UseCameraResult {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const generationRef = useRef(0);
 
   const releaseStream = useCallback(() => {
     if (streamRef.current) {
@@ -42,6 +43,11 @@ export function useCamera(): UseCameraResult {
       setStatus('unsupported');
       return;
     }
+    releaseStream();
+    // Generation counter so a stale getUserMedia resolution from a previous
+    // call (e.g. React StrictMode's double-mount in dev, or a fast retry)
+    // can release its stream without clobbering the latest call's state.
+    const gen = ++generationRef.current;
     setStatus('requesting');
     setErrorMessage(null);
     try {
@@ -49,18 +55,16 @@ export function useCamera(): UseCameraResult {
         video: { facingMode: { ideal: 'environment' } },
         audio: false,
       });
-      // Defensive: if the consumer unmounted between the await and resolve,
-      // there is no longer a video element to bind to. Release immediately.
-      if (!videoRef.current) {
+      if (generationRef.current !== gen) {
         stream.getTracks().forEach((track) => {
           track.stop();
         });
         return;
       }
       streamRef.current = stream;
-      videoRef.current.srcObject = stream;
       setStatus('streaming');
     } catch (err) {
+      if (generationRef.current !== gen) return;
       const name = err instanceof DOMException ? err.name : '';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         setStatus('denied');
@@ -71,12 +75,22 @@ export function useCamera(): UseCameraResult {
         setErrorMessage(err instanceof Error ? err.message : null);
       }
     }
-  }, []);
+  }, [releaseStream]);
 
   const stop = useCallback(() => {
     releaseStream();
     setStatus('idle');
   }, [releaseStream]);
+
+  // The <video> element only mounts in the consumer's 'streaming' branch, so
+  // we can't bind the stream synchronously inside start() — by the time the
+  // promise resolves, videoRef.current is still null. Binding here runs
+  // after React commits the streaming JSX, when the ref is populated.
+  useEffect(() => {
+    if (status === 'streaming' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [status]);
 
   useEffect(() => {
     return releaseStream;
