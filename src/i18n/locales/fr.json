@@ -554,6 +554,36 @@
       }
     }
   },
+  "scan": {
+    "title": "Scanner une carte",
+    "requesting": "Activation de la caméra…",
+    "guide": "Cadrez la carte dans le rectangle",
+    "capture": "Capturer",
+    "useFile": "Choisir une image",
+    "retry": "Activer la caméra",
+    "idle": {
+      "title": "Caméra prête",
+      "description": "Démarrez la caméra pour scanner une carte."
+    },
+    "denied": {
+      "title": "Caméra non autorisée",
+      "description": "Autorisez l’accès à la caméra dans les réglages du navigateur, ou choisissez une image."
+    },
+    "unsupported": {
+      "title": "Pas de caméra détectée",
+      "description": "Votre appareil n’expose pas de caméra à cette page. Choisissez une image."
+    },
+    "error": {
+      "title": "Caméra indisponible",
+      "description": "Impossible d’ouvrir la caméra. Réessayez ou choisissez une image."
+    },
+    "preview": {
+      "alt": "Carte capturée",
+      "retake": "Reprendre",
+      "continueDisabled": "OCR à venir",
+      "ocrPending": "Image capturée. La reconnaissance de texte arrive à la prochaine étape."
+    }
+  },
   "profile": {
     "title": "Profil",
     "loggedInAs": "Connecté en tant que",

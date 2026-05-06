@@ -554,6 +554,36 @@
       }
     }
   },
+  "scan": {
+    "title": "Scan a card",
+    "requesting": "Starting the camera…",
+    "guide": "Frame the card inside the rectangle",
+    "capture": "Capture",
+    "useFile": "Choose an image",
+    "retry": "Start the camera",
+    "idle": {
+      "title": "Camera ready",
+      "description": "Start the camera to scan a card."
+    },
+    "denied": {
+      "title": "Camera blocked",
+      "description": "Allow camera access in your browser settings, or choose an image."
+    },
+    "unsupported": {
+      "title": "No camera detected",
+      "description": "Your device does not expose a camera here. Choose an image."
+    },
+    "error": {
+      "title": "Camera unavailable",
+      "description": "Could not open the camera. Try again or choose an image."
+    },
+    "preview": {
+      "alt": "Captured card",
+      "retake": "Retake",
+      "continueDisabled": "OCR coming next",
+      "ocrPending": "Image captured. Text recognition arrives in the next step."
+    }
+  },
   "profile": {
     "title": "Profile",
     "loggedInAs": "Signed in as",
