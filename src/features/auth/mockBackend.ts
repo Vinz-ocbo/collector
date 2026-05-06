@@ -7,7 +7,13 @@
  */
 
 import Dexie, { type Table } from 'dexie';
-import { AuthError, type AuthBackend, type Session, type SignUpResult } from './types';
+import {
+  AuthError,
+  type AuthBackend,
+  type OAuthProvider,
+  type Session,
+  type SignUpResult,
+} from './types';
 
 type StoredUser = {
   id: string;
@@ -132,6 +138,32 @@ export function createMockAuthBackend(): AuthBackend {
       // Mock: pretend we sent an email regardless of account existence
       // (per .clinerules-dev §5: do not leak account existence).
       await new Promise((resolve) => setTimeout(resolve, 200));
+    },
+
+    async signInWithOAuth(provider: OAuthProvider): Promise<void> {
+      // The real backend redirects to the provider; the dev mock instead
+      // immediately materialises a session so the OAuth button is testable
+      // without a Supabase project. The synthetic email keeps mock OAuth
+      // accounts visually distinct from password-based ones.
+      const email = `${provider}-user@oauth-mock.local`;
+      let user = await db.users.where('email').equals(email).first();
+      if (!user) {
+        user = {
+          id: newId(),
+          email,
+          passwordHash: '',
+          createdAt: new Date().toISOString(),
+        };
+        await db.users.put(user);
+      }
+      const session: StoredSession = {
+        id: newId(),
+        userId: user.id,
+        email: user.email,
+        expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
+      };
+      await db.sessions.put(session);
+      writeActiveSessionId(session.id);
     },
   };
 }

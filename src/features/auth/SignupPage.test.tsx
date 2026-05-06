@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
 import { SignupPage } from './SignupPage';
@@ -52,5 +52,22 @@ describe('SignupPage', () => {
     expect(
       await screen.findByRole('heading', { name: /Vérifiez votre email/i }),
     ).toBeInTheDocument();
+  });
+
+  it('renders OAuth buttons and triggers the backend on click', async () => {
+    const signInWithOAuth = vi.fn(() => Promise.resolve());
+    const backend = makeFakeBackend({ signInWithOAuth });
+    renderSignup(backend);
+    await userEvent.click(screen.getByRole('button', { name: /Google/i }));
+    await waitFor(() => expect(signInWithOAuth).toHaveBeenCalledWith('google', undefined));
+  });
+
+  it('shows a toast when the OAuth provider is not configured', async () => {
+    const backend = makeFakeBackend({
+      signInWithOAuth: () => Promise.reject(new AuthError('oauth_provider_not_configured')),
+    });
+    renderSignup(backend);
+    await userEvent.click(screen.getByRole('button', { name: /Apple/i }));
+    expect(await screen.findByText(/Apple n’est pas activé/i)).toBeInTheDocument();
   });
 });

@@ -60,13 +60,16 @@
       "signupLink": "Inscription",
       "errorInvalidCredentials": "Email ou mot de passe incorrect.",
       "errorGeneric": "Connexion impossible. Réessayez plus tard.",
-      "oauthSoon": {
-        "title": "{{provider}} bientôt disponible",
-        "description": "Le branchement OAuth sera ajouté quand le provider sera choisi."
+      "oauthError": {
+        "notConfigured": "{{provider}} n’est pas activé. Contactez le support ou utilisez l’email.",
+        "generic": "Connexion {{provider}} impossible. Réessayez plus tard."
       }
     },
     "signup": {
       "title": "Créer un compte",
+      "google": "S’inscrire avec Google",
+      "apple": "S’inscrire avec Apple",
+      "or": "ou",
       "email": "Email",
       "password": "Mot de passe",
       "passwordRules": {
@@ -81,6 +84,10 @@
       "alreadyAccount": "Déjà inscrit ?",
       "loginLink": "Se connecter",
       "errorGeneric": "Inscription impossible. Réessayez plus tard.",
+      "oauthError": {
+        "notConfigured": "{{provider}} n’est pas activé. Contactez le support ou utilisez l’email.",
+        "generic": "Inscription {{provider}} impossible. Réessayez plus tard."
+      },
       "submitted": {
         "title": "Vérifiez votre email",
         "description": "Si un compte n’existe pas déjà avec <strong>{{email}}</strong>, vous recevrez un lien d’activation dans quelques minutes."

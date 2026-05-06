@@ -196,6 +196,47 @@ direct between the frontend and Supabase. When `/v1/items/*` sync routes
 are added later, the backend will validate Supabase JWTs server-side; that
 work isn't in this codebase yet (see `CLAUDE.md` "What's NOT yet wired").
 
+### Enabling OAuth providers (Google / Apple)
+
+The Login and Signup pages ship Google and Apple OAuth buttons. They are
+wired to `signInWithOAuth` on the auth backend; when clicked, Supabase JS
+triggers a redirect to the provider's consent screen. If a provider is
+disabled in the Supabase dashboard, the click surfaces a translated toast
+("X n'est pas activé") instead of redirecting.
+
+#### Google (free)
+
+1. **Supabase dashboard → Authentication → Providers → Google** : toggle
+   on. Supabase exposes a redirect URL like
+   `https://<project>.supabase.co/auth/v1/callback` — copy it.
+2. **Google Cloud console** → create an **OAuth 2.0 Client ID** of type
+   *Web application*. Paste Supabase's redirect URL into **Authorized
+   redirect URIs**. Add your Vercel URL into **Authorized JavaScript
+   origins** (`https://<your-vercel-url>`).
+3. Copy the **Client ID** and **Client secret** back into Supabase's Google
+   provider form. Save.
+4. **Authentication → URL Configuration** : set **Site URL** to
+   `https://<your-vercel-url>` (this is where Supabase redirects after the
+   provider succeeds — must match the Vercel deploy URL).
+
+Smoke-test: open `/auth/login` → click *Continue with Google* → consent →
+you land back on `/` signed in.
+
+#### Apple (paid)
+
+Apple Sign-In requires an **Apple Developer Program** membership ($99/yr).
+The flow is otherwise the same — Supabase docs cover the App ID + Service
+ID + private key dance. Until the membership is active, leave Apple
+disabled in Supabase: clicking the button on the deployed app will show
+the not-configured toast cleanly.
+
+#### Other providers
+
+The `OAuthProvider` type in `src/features/auth/types.ts` already lists
+`'github'`. Adding a button is a 3-line change: enable GitHub in Supabase,
+add an i18n key + a `<Button>` block on Login/Signup, pass `'github'` to
+`handleOAuth`. No backend changes needed.
+
 ---
 
 ## 5. Updating the deployment

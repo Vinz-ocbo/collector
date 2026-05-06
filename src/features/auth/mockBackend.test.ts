@@ -79,4 +79,21 @@ describe('mockBackend', () => {
     const session = await backend.signInWithPassword('FOO@example.com', 'Strong123');
     expect(session.email).toBe('foo@example.com');
   });
+
+  it('signInWithOAuth materialises a session immediately (dev mock)', async () => {
+    const backend = createMockAuthBackend();
+    await backend.signInWithOAuth('google');
+    const session = await backend.getSession();
+    expect(session?.email).toBe('google-user@oauth-mock.local');
+  });
+
+  it('signInWithOAuth is idempotent across calls for the same provider', async () => {
+    const backend = createMockAuthBackend();
+    await backend.signInWithOAuth('google');
+    const first = await backend.getSession();
+    await backend.signOut();
+    await backend.signInWithOAuth('google');
+    const second = await backend.getSession();
+    expect(second?.userId).toBe(first?.userId);
+  });
 });

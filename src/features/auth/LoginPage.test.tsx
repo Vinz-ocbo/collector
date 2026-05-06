@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
@@ -58,5 +58,22 @@ describe('LoginPage', () => {
     await userEvent.type(screen.getByLabelText('Mot de passe'), 'Strong123');
     await userEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
     await waitFor(() => expect(screen.getByTestId('home')).toBeInTheDocument());
+  });
+
+  it('triggers OAuth sign-in via the backend when an OAuth button is clicked', async () => {
+    const signInWithOAuth = vi.fn(() => Promise.resolve());
+    const backend = makeFakeBackend({ signInWithOAuth });
+    renderLogin(backend);
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Google' }));
+    await waitFor(() => expect(signInWithOAuth).toHaveBeenCalledWith('google', undefined));
+  });
+
+  it('surfaces a toast when the OAuth provider is not configured', async () => {
+    const backend = makeFakeBackend({
+      signInWithOAuth: () => Promise.reject(new AuthError('oauth_provider_not_configured')),
+    });
+    renderLogin(backend);
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Apple' }));
+    expect(await screen.findByText(/Apple n’est pas activé/i)).toBeInTheDocument();
   });
 });

@@ -11,7 +11,14 @@
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { AuthError, type AuthBackend, type Session, type SignUpResult } from './types';
+import {
+  AuthError,
+  type AuthBackend,
+  type OAuthProvider,
+  type Session,
+  type SignInWithOAuthOptions,
+  type SignUpResult,
+} from './types';
 
 export type SupabaseAuthBackendOptions = {
   supabaseUrl: string;
@@ -76,6 +83,24 @@ export function createSupabaseAuthBackend(opts: SupabaseAuthBackendOptions): Aut
       const { error } = await client.auth.resetPasswordForEmail(email);
       if (error) throw mapError(error);
     },
+
+    async signInWithOAuth(
+      provider: OAuthProvider,
+      options: SignInWithOAuthOptions = {},
+    ): Promise<void> {
+      // Supabase JS triggers a full-page redirect to the provider, so under
+      // normal circumstances this method never resolves — the page unloads
+      // before the promise settles. We still await/throw so configuration
+      // errors (provider disabled, missing keys) surface as AuthError.
+      const redirectTo =
+        options.redirectTo ??
+        (typeof window !== 'undefined' ? `${window.location.origin}/` : undefined);
+      const { error } = await client.auth.signInWithOAuth({
+        provider,
+        ...(redirectTo ? { options: { redirectTo } } : {}),
+      });
+      if (error) throw mapError(error);
+    },
   };
 }
 
@@ -100,6 +125,13 @@ function mapError(error: {
   }
   if (code === 'weak_password') {
     return new AuthError('weak_password', message);
+  }
+  if (
+    code === 'provider_disabled' ||
+    code === 'oauth_provider_not_supported' ||
+    code === 'validation_failed'
+  ) {
+    return new AuthError('oauth_provider_not_configured', message);
   }
   if (error.status === 429) {
     return new AuthError('rate_limited', message);

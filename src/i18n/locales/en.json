@@ -60,13 +60,16 @@
       "signupLink": "Sign up",
       "errorInvalidCredentials": "Wrong email or password.",
       "errorGeneric": "Sign-in failed. Please try again later.",
-      "oauthSoon": {
-        "title": "{{provider}} coming soon",
-        "description": "OAuth wiring will be added once the provider is chosen."
+      "oauthError": {
+        "notConfigured": "{{provider}} is not enabled. Contact support or use email.",
+        "generic": "{{provider}} sign-in failed. Please try again later."
       }
     },
     "signup": {
       "title": "Create an account",
+      "google": "Sign up with Google",
+      "apple": "Sign up with Apple",
+      "or": "or",
       "email": "Email",
       "password": "Password",
       "passwordRules": {
@@ -81,6 +84,10 @@
       "alreadyAccount": "Already registered?",
       "loginLink": "Sign in",
       "errorGeneric": "Sign-up failed. Please try again later.",
+      "oauthError": {
+        "notConfigured": "{{provider}} is not enabled. Contact support or use email.",
+        "generic": "{{provider}} sign-up failed. Please try again later."
+      },
       "submitted": {
         "title": "Check your email",
         "description": "If an account does not already exist with <strong>{{email}}</strong>, you will receive an activation link shortly."

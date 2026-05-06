@@ -4,20 +4,48 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Eye, EyeOff, Mail } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui';
 import { cn, tDynamic } from '@/shared/lib';
 import { evaluatePasswordStrength, signupSchema, type SignupInput } from './schemas';
-import { useSignIn, useSignUp } from './hooks';
-import { AuthError } from './types';
+import { useSignIn, useSignInWithOAuth, useSignUp } from './hooks';
+import { AuthError, type OAuthProvider } from './types';
 
 export function SignupPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { show } = useToast();
   const signUp = useSignUp();
   const signIn = useSignIn();
+  const signInWithOAuth = useSignInWithOAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<{ email: string } | null>(null);
+  const [pendingProvider, setPendingProvider] = useState<OAuthProvider | null>(null);
+
+  const providerLabel: Record<OAuthProvider, string> = {
+    google: 'Google',
+    apple: 'Apple',
+    github: 'GitHub',
+  };
+
+  const handleOAuth = async (provider: OAuthProvider) => {
+    setGlobalError(null);
+    setPendingProvider(provider);
+    try {
+      await signInWithOAuth.mutateAsync({ provider });
+      navigate('/', { replace: true });
+    } catch (error) {
+      const label = providerLabel[provider];
+      const code = error instanceof AuthError ? error.code : undefined;
+      const description =
+        code === 'oauth_provider_not_configured'
+          ? t('auth.signup.oauthError.notConfigured', { provider: label })
+          : t('auth.signup.oauthError.generic', { provider: label });
+      show({ title: label, description, tone: 'danger' });
+    } finally {
+      setPendingProvider(null);
+    }
+  };
 
   const {
     register,
@@ -77,6 +105,35 @@ export function SignupPage() {
       <header className="text-center">
         <h1 className="text-xl font-bold">{t('auth.signup.title')}</h1>
       </header>
+
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            void handleOAuth('google');
+          }}
+          disabled={pendingProvider !== null}
+        >
+          {t('auth.signup.google')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            void handleOAuth('apple');
+          }}
+          disabled={pendingProvider !== null}
+        >
+          {t('auth.signup.apple')}
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-fg-muted">
+        <div className="h-px flex-1 bg-border" />
+        <span>{t('auth.signup.or')}</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
       <form
         onSubmit={(event) => {

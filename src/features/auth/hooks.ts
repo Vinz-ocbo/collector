@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthBackend } from './AuthBackendProvider';
-import type { Session, SignUpResult } from './types';
+import type { OAuthProvider, Session, SignInWithOAuthOptions, SignUpResult } from './types';
 
 const SESSION_KEY = ['auth', 'session'] as const;
 
@@ -54,5 +54,19 @@ export function useRequestPasswordReset() {
   const backend = useAuthBackend();
   return useMutation<void, Error, { email: string }>({
     mutationFn: ({ email }) => backend.requestPasswordReset(email),
+  });
+}
+
+export function useSignInWithOAuth() {
+  const backend = useAuthBackend();
+  const qc = useQueryClient();
+  return useMutation<void, Error, { provider: OAuthProvider; options?: SignInWithOAuthOptions }>({
+    mutationFn: ({ provider, options }) => backend.signInWithOAuth(provider, options),
+    onSuccess: () => {
+      // The Supabase backend triggers a redirect that unloads the page, so
+      // this rarely fires in production. The dev mock signs in immediately,
+      // and the cache invalidation lets useSession refetch the new session.
+      void qc.invalidateQueries({ queryKey: SESSION_KEY });
+    },
   });
 }

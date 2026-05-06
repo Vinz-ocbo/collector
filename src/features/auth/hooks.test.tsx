@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
 import 'fake-indexeddb/auto';
 import { AuthBackendProvider } from './AuthBackendProvider';
-import { useSession, useSignIn, useSignOut, useSignUp } from './hooks';
+import { useSession, useSignIn, useSignInWithOAuth, useSignOut, useSignUp } from './hooks';
 import type { AuthBackend, Session } from './types';
 
 function makeBackend(overrides: Partial<AuthBackend> = {}): AuthBackend {
@@ -21,6 +21,14 @@ function makeBackend(overrides: Partial<AuthBackend> = {}): AuthBackend {
       return Promise.resolve();
     },
     requestPasswordReset: () => Promise.resolve(),
+    signInWithOAuth: (provider) => {
+      session = {
+        userId: 'u-oauth',
+        email: `${provider}@oauth.test`,
+        expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+      };
+      return Promise.resolve();
+    },
     ...overrides,
   };
 }
@@ -75,5 +83,18 @@ describe('auth hooks', () => {
       outcome = await result.current.mutateAsync({ email: 'a@b.com', password: 'Strong123' });
     });
     expect(outcome?.requiresVerification).toBe(false);
+  });
+
+  it('useSignInWithOAuth invalidates the session cache so the new session is picked up', async () => {
+    const backend = makeBackend();
+    const { result } = renderHook(() => ({ session: useSession(), oauth: useSignInWithOAuth() }), {
+      wrapper: wrapper(backend),
+    });
+    await waitFor(() => expect(result.current.session.isPending).toBe(false));
+    expect(result.current.session.data).toBeNull();
+    await act(async () => {
+      await result.current.oauth.mutateAsync({ provider: 'google' });
+    });
+    await waitFor(() => expect(result.current.session.data?.email).toBe('google@oauth.test'));
   });
 });

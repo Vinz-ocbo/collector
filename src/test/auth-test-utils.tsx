@@ -22,6 +22,14 @@ export function makeFakeBackend(overrides: Partial<AuthBackend> = {}): AuthBacke
       return Promise.resolve();
     },
     requestPasswordReset: () => Promise.resolve(),
+    signInWithOAuth: (provider) => {
+      session = {
+        userId: 'u-oauth',
+        email: `${provider}@oauth.test`,
+        expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+      };
+      return Promise.resolve();
+    },
     ...overrides,
   };
 }

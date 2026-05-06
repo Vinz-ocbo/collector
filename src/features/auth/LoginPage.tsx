@@ -7,8 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { Button, Input, useToast } from '@/shared/ui';
 import { tDynamic } from '@/shared/lib';
 import { loginSchema, type LoginInput } from './schemas';
-import { useSignIn } from './hooks';
-import { AuthError } from './types';
+import { useSignIn, useSignInWithOAuth } from './hooks';
+import { AuthError, type OAuthProvider } from './types';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -16,8 +16,16 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { show } = useToast();
   const signIn = useSignIn();
+  const signInWithOAuth = useSignInWithOAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [pendingProvider, setPendingProvider] = useState<OAuthProvider | null>(null);
+
+  const providerLabel: Record<OAuthProvider, string> = {
+    google: 'Google',
+    apple: 'Apple',
+    github: 'GitHub',
+  };
 
   const {
     register,
@@ -43,12 +51,27 @@ export function LoginPage() {
     }
   });
 
-  const handleOAuthStub = (provider: string) => {
-    show({
-      title: t('auth.login.oauthSoon.title', { provider }),
-      description: t('auth.login.oauthSoon.description'),
-      tone: 'info',
-    });
+  const handleOAuth = async (provider: OAuthProvider) => {
+    setGlobalError(null);
+    setPendingProvider(provider);
+    try {
+      await signInWithOAuth.mutateAsync({ provider });
+      // Real Supabase backend redirects before this point. The dev mock
+      // resolves immediately — navigate so RequireAuth picks up the new
+      // session via the cache invalidation triggered inside the hook.
+      const redirect = searchParams.get('redirect');
+      navigate(redirect ?? '/', { replace: true });
+    } catch (error) {
+      const label = providerLabel[provider];
+      const code = error instanceof AuthError ? error.code : undefined;
+      const description =
+        code === 'oauth_provider_not_configured'
+          ? t('auth.login.oauthError.notConfigured', { provider: label })
+          : t('auth.login.oauthError.generic', { provider: label });
+      show({ title: label, description, tone: 'danger' });
+    } finally {
+      setPendingProvider(null);
+    }
   };
 
   return (
@@ -60,10 +83,24 @@ export function LoginPage() {
       </header>
 
       <div className="flex flex-col gap-2">
-        <Button variant="secondary" fullWidth onClick={() => handleOAuthStub('Google')}>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            void handleOAuth('google');
+          }}
+          disabled={pendingProvider !== null}
+        >
           {t('auth.login.google')}
         </Button>
-        <Button variant="secondary" fullWidth onClick={() => handleOAuthStub('Apple')}>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            void handleOAuth('apple');
+          }}
+          disabled={pendingProvider !== null}
+        >
           {t('auth.login.apple')}
         </Button>
       </div>

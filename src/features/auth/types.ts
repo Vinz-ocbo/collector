@@ -24,7 +24,20 @@ export type AuthErrorCode =
   | 'rate_limited'
   | 'email_exists'
   | 'weak_password'
+  | 'oauth_provider_not_configured'
   | 'unknown';
+
+/**
+ * OAuth providers we accept on the auth UI. Adding a new entry implies
+ * (a) a button label in i18n (`auth.login.<provider>`), (b) configuration on
+ * the chosen auth provider (Supabase: Authentication → Providers).
+ */
+export type OAuthProvider = 'google' | 'apple' | 'github';
+
+export type SignInWithOAuthOptions = {
+  /** Where the provider should send the user back. Defaults to the current origin. */
+  redirectTo?: string;
+};
 
 export class AuthError extends Error {
   constructor(
@@ -51,4 +64,14 @@ export type AuthBackend = {
 
   /** Request a password reset email. Always resolves (no leak about account existence). */
   requestPasswordReset(email: string): Promise<void>;
+
+  /**
+   * Begin an OAuth flow with the given provider. The contract is *redirect-based*:
+   * the implementation typically navigates the browser to the provider's
+   * consent page, so this method may never resolve in production. On
+   * misconfiguration (provider disabled in the dashboard, missing client id,
+   * etc.) it throws AuthError('oauth_provider_not_configured' | 'unknown').
+   * The dev mock implements an immediate fake sign-in instead.
+   */
+  signInWithOAuth(provider: OAuthProvider, options?: SignInWithOAuthOptions): Promise<void>;
 };
