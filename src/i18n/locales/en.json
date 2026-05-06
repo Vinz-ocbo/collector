@@ -580,8 +580,16 @@
     "preview": {
       "alt": "Captured card",
       "retake": "Retake",
-      "continueDisabled": "OCR coming next",
-      "ocrPending": "Image captured. Text recognition arrives in the next step."
+      "ocrPending": "Image captured. Run recognition to extract the title.",
+      "searchDisabled": "Search (soon)"
+    },
+    "ocr": {
+      "start": "Recognize title",
+      "processing": "Recognising…",
+      "detected": "Detected text",
+      "empty": "No text detected.",
+      "confidence": "Confidence: {{value}}%",
+      "error": "Recognition failed. Try again."
     }
   },
   "profile": {

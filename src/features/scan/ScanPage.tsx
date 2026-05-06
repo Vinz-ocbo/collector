@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Camera, Image as ImageIcon, RefreshCcw } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, EmptyState, useToast } from '@/shared/ui';
 import { tDynamic } from '@/shared/lib';
 import { captureFrame } from './captureFrame';
+import { cropTopFraction } from './cropImage';
+import { recognizeCardText, type OcrResult } from './ocr';
 import { useCamera } from './useCamera';
 
 type CapturedImage = {
@@ -11,16 +13,42 @@ type CapturedImage = {
   url: string;
 };
 
+type OcrState =
+  | { kind: 'idle' }
+  | { kind: 'processing' }
+  | { kind: 'done'; result: OcrResult }
+  | { kind: 'error' };
+
+const TITLE_REGION_FRACTION = 0.25;
+
 export function ScanPage() {
   const { t } = useTranslation();
   const { show } = useToast();
   const { status, errorMessage, videoRef, start, stop } = useCamera();
   const [captured, setCaptured] = useState<CapturedImage | null>(null);
+  const [ocrState, setOcrState] = useState<OcrState>({ kind: 'idle' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void start();
   }, [start]);
+
+  const acceptCapture = (cap: CapturedImage) => {
+    setCaptured(cap);
+    setOcrState({ kind: 'idle' });
+  };
+
+  const runOcr = async () => {
+    if (!captured) return;
+    setOcrState({ kind: 'processing' });
+    try {
+      const titleRegion = await cropTopFraction(captured.blob, TITLE_REGION_FRACTION);
+      const result = await recognizeCardText(titleRegion);
+      setOcrState({ kind: 'done', result });
+    } catch {
+      setOcrState({ kind: 'error' });
+    }
+  };
 
   // Revoke object URLs on unmount or when the captured image changes.
   useEffect(() => {
@@ -35,7 +63,7 @@ export function ScanPage() {
     try {
       const blob = await captureFrame(videoRef.current);
       const url = URL.createObjectURL(blob);
-      setCaptured({ blob, url });
+      acceptCapture({ blob, url });
       stop();
     } catch {
       show({
@@ -48,6 +76,7 @@ export function ScanPage() {
 
   const handleRetake = () => {
     setCaptured(null);
+    setOcrState({ kind: 'idle' });
     void start();
   };
 
@@ -57,7 +86,7 @@ export function ScanPage() {
     if (!file) return;
     stop();
     const url = URL.createObjectURL(file);
-    setCaptured({ blob: file, url });
+    acceptCapture({ blob: file, url });
   };
 
   if (captured) {
@@ -71,17 +100,83 @@ export function ScanPage() {
               className="h-full w-full object-cover"
             />
           </div>
-          <p className="mt-4 text-center text-sm text-fg-muted">{t('scan.preview.ocrPending')}</p>
+
+          {ocrState.kind === 'idle' ? (
+            <p className="mt-4 text-center text-sm text-fg-muted">{t('scan.preview.ocrPending')}</p>
+          ) : null}
+
+          {ocrState.kind === 'processing' ? (
+            <p
+              role="status"
+              aria-live="polite"
+              className="mt-4 flex items-center justify-center gap-2 text-sm text-fg-muted"
+            >
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              {t('scan.ocr.processing')}
+            </p>
+          ) : null}
+
+          {ocrState.kind === 'done' ? (
+            <div className="mx-auto mt-4 max-w-md rounded-md border border-border bg-bg-raised p-3">
+              <p className="text-xs uppercase tracking-wide text-fg-muted">
+                {t('scan.ocr.detected')}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap break-words font-mono text-sm text-fg">
+                {ocrState.result.text || t('scan.ocr.empty')}
+              </p>
+              <p className="mt-2 text-xs text-fg-muted">
+                {t('scan.ocr.confidence', { value: ocrState.result.confidence })}
+              </p>
+            </div>
+          ) : null}
+
+          {ocrState.kind === 'error' ? (
+            <p
+              role="alert"
+              className="mx-auto mt-4 max-w-md rounded-md border border-danger/30 bg-danger-bg px-3 py-2 text-sm text-danger"
+            >
+              {t('scan.ocr.error')}
+            </p>
+          ) : null}
         </div>
+
         <div className="border-t border-border bg-bg-raised p-4">
           <div className="mx-auto flex max-w-md gap-2">
             <Button variant="secondary" fullWidth onClick={handleRetake}>
               <RefreshCcw className="h-4 w-4" aria-hidden="true" />
               {t('scan.preview.retake')}
             </Button>
-            <Button fullWidth disabled>
-              {t('scan.preview.continueDisabled')}
-            </Button>
+            {ocrState.kind === 'idle' ? (
+              <Button
+                fullWidth
+                onClick={() => {
+                  void runOcr();
+                }}
+              >
+                {t('scan.ocr.start')}
+              </Button>
+            ) : null}
+            {ocrState.kind === 'processing' ? (
+              <Button fullWidth disabled>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                {t('scan.ocr.processing')}
+              </Button>
+            ) : null}
+            {ocrState.kind === 'done' ? (
+              <Button fullWidth disabled>
+                {t('scan.preview.searchDisabled')}
+              </Button>
+            ) : null}
+            {ocrState.kind === 'error' ? (
+              <Button
+                fullWidth
+                onClick={() => {
+                  void runOcr();
+                }}
+              >
+                {t('common.retry')}
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>

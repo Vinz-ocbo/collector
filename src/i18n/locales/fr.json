@@ -580,8 +580,16 @@
     "preview": {
       "alt": "Carte capturée",
       "retake": "Reprendre",
-      "continueDisabled": "OCR à venir",
-      "ocrPending": "Image capturée. La reconnaissance de texte arrive à la prochaine étape."
+      "ocrPending": "Image capturée. Lancez la reconnaissance pour extraire le titre.",
+      "searchDisabled": "Rechercher (bientôt)"
+    },
+    "ocr": {
+      "start": "Reconnaître le titre",
+      "processing": "Reconnaissance en cours…",
+      "detected": "Texte détecté",
+      "empty": "Aucun texte détecté.",
+      "confidence": "Confiance : {{value}} %",
+      "error": "Échec de la reconnaissance. Réessayez."
     }
   },
   "profile": {

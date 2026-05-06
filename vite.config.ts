@@ -63,6 +63,11 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
+          // Heavy, lazy-loaded only on the Scan page — keep isolated so it
+          // never leaks into the main chunk via barrel imports.
+          if (id.includes('tesseract.js')) {
+            return 'ocr-vendor';
+          }
           if (id.includes('react-router') || id.includes('/react-dom/') || /\/react\//.test(id)) {
             return 'react-vendor';
           }
