@@ -73,7 +73,7 @@ describe('LoginPage', () => {
       signInWithOAuth: () => Promise.reject(new AuthError('oauth_provider_not_configured')),
     });
     renderLogin(backend);
-    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Apple' }));
-    expect(await screen.findByText(/Apple n’est pas activé/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Google' }));
+    expect(await screen.findByText(/Google n’est pas activé/i)).toBeInTheDocument();
   });
 });

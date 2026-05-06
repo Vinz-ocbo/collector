@@ -32,7 +32,7 @@ export type AuthErrorCode =
  * (a) a button label in i18n (`auth.login.<provider>`), (b) configuration on
  * the chosen auth provider (Supabase: Authentication → Providers).
  */
-export type OAuthProvider = 'google' | 'apple' | 'github';
+export type OAuthProvider = 'google' | 'github';
 
 export type SignInWithOAuthOptions = {
   /** Where the provider should send the user back. Defaults to the current origin. */

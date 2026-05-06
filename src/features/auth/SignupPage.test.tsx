@@ -67,7 +67,7 @@ describe('SignupPage', () => {
       signInWithOAuth: () => Promise.reject(new AuthError('oauth_provider_not_configured')),
     });
     renderSignup(backend);
-    await userEvent.click(screen.getByRole('button', { name: /Apple/i }));
-    expect(await screen.findByText(/Apple n’est pas activé/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Google/i }));
+    expect(await screen.findByText(/Google n’est pas activé/i)).toBeInTheDocument();
   });
 });

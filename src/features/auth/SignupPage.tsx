@@ -24,7 +24,6 @@ export function SignupPage() {
 
   const providerLabel: Record<OAuthProvider, string> = {
     google: 'Google',
-    apple: 'Apple',
     github: 'GitHub',
   };
 
@@ -116,16 +115,6 @@ export function SignupPage() {
           disabled={pendingProvider !== null}
         >
           {t('auth.signup.google')}
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => {
-            void handleOAuth('apple');
-          }}
-          disabled={pendingProvider !== null}
-        >
-          {t('auth.signup.apple')}
         </Button>
       </div>
 

@@ -196,13 +196,13 @@ direct between the frontend and Supabase. When `/v1/items/*` sync routes
 are added later, the backend will validate Supabase JWTs server-side; that
 work isn't in this codebase yet (see `CLAUDE.md` "What's NOT yet wired").
 
-### Enabling OAuth providers (Google / Apple)
+### Enabling OAuth providers (Google)
 
-The Login and Signup pages ship Google and Apple OAuth buttons. They are
-wired to `signInWithOAuth` on the auth backend; when clicked, Supabase JS
-triggers a redirect to the provider's consent screen. If a provider is
-disabled in the Supabase dashboard, the click surfaces a translated toast
-("X n'est pas activé") instead of redirecting.
+The Login and Signup pages ship a Google OAuth button. It is wired to
+`signInWithOAuth` on the auth backend; when clicked, Supabase JS triggers
+a redirect to Google's consent screen. If Google is disabled in the
+Supabase dashboard, the click surfaces a translated toast ("Google n'est
+pas activé") instead of redirecting.
 
 #### Google (free)
 
@@ -222,20 +222,15 @@ disabled in the Supabase dashboard, the click surfaces a translated toast
 Smoke-test: open `/auth/login` → click *Continue with Google* → consent →
 you land back on `/` signed in.
 
-#### Apple (paid)
+#### Other providers (Apple, GitHub, …)
 
-Apple Sign-In requires an **Apple Developer Program** membership ($99/yr).
-The flow is otherwise the same — Supabase docs cover the App ID + Service
-ID + private key dance. Until the membership is active, leave Apple
-disabled in Supabase: clicking the button on the deployed app will show
-the not-configured toast cleanly.
-
-#### Other providers
-
-The `OAuthProvider` type in `src/features/auth/types.ts` already lists
-`'github'`. Adding a button is a 3-line change: enable GitHub in Supabase,
-add an i18n key + a `<Button>` block on Login/Signup, pass `'github'` to
-`handleOAuth`. No backend changes needed.
+The `OAuthProvider` type in `src/features/auth/types.ts` accepts `'github'`
+out of the box. Adding a button takes ~3 lines per page: enable the
+provider in Supabase, add an i18n key (`auth.login.<provider>`) and a
+`<Button>` block, pass the provider to `handleOAuth`. Apple specifically
+requires an **Apple Developer Program** membership ($99/yr) and the App ID
++ Service ID + private key dance — Supabase docs cover it. Add `'apple'`
+back to the `OAuthProvider` union when ready.
 
 ---
 

@@ -47,7 +47,6 @@
       "title": "Welcome back",
       "subtitle": "Sign in to your collection.",
       "google": "Continue with Google",
-      "apple": "Continue with Apple",
       "or": "or",
       "email": "Email",
       "password": "Password",
@@ -68,7 +67,6 @@
     "signup": {
       "title": "Create an account",
       "google": "Sign up with Google",
-      "apple": "Sign up with Apple",
       "or": "or",
       "email": "Email",
       "password": "Password",

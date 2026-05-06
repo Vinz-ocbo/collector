@@ -23,7 +23,6 @@ export function LoginPage() {
 
   const providerLabel: Record<OAuthProvider, string> = {
     google: 'Google',
-    apple: 'Apple',
     github: 'GitHub',
   };
 
@@ -92,16 +91,6 @@ export function LoginPage() {
           disabled={pendingProvider !== null}
         >
           {t('auth.login.google')}
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => {
-            void handleOAuth('apple');
-          }}
-          disabled={pendingProvider !== null}
-        >
-          {t('auth.login.apple')}
         </Button>
       </div>
 
