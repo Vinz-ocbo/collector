@@ -589,7 +589,9 @@
       "detected": "Texte détecté",
       "empty": "Aucun texte détecté.",
       "confidence": "Confiance : {{value}} %",
-      "error": "Échec de la reconnaissance. Réessayez."
+      "error": "Échec de la reconnaissance. Réessayez.",
+      "regionLabel": "Image envoyée à l’OCR",
+      "regionAlt": "Zone de la carte analysée par la reconnaissance"
     }
   },
   "profile": {

@@ -4,22 +4,31 @@ import { useTranslation } from 'react-i18next';
 import { Button, EmptyState, useToast } from '@/shared/ui';
 import { tDynamic } from '@/shared/lib';
 import { captureFrame } from './captureFrame';
-import { cropTopFraction } from './cropImage';
+import { computeGuideRectInNative, cropToRect, cropTopFraction, type ImageRect } from './cropImage';
 import { recognizeCardText, type OcrResult } from './ocr';
 import { useCamera } from './useCamera';
 
 type CapturedImage = {
   blob: Blob;
   url: string;
+  /**
+   * Rect (in native frame coords) of the visible guide overlay at capture
+   * time. Null when there's no overlay (file-picker path) — in that case
+   * we treat the whole image as the card region.
+   */
+  cardRect: ImageRect | null;
 };
 
 type OcrState =
   | { kind: 'idle' }
   | { kind: 'processing' }
-  | { kind: 'done'; result: OcrResult }
+  | { kind: 'done'; result: OcrResult; regionUrl: string }
   | { kind: 'error' };
 
-const TITLE_REGION_FRACTION = 0.25;
+// Fraction of the card region (top-down) sent to OCR. The Magic title bar
+// occupies ~8-10% of card height; 0.20 leaves comfortable margin for
+// imperfect framing without dragging the type line into the OCR input.
+const TITLE_REGION_FRACTION = 0.2;
 
 export function ScanPage() {
   const { t } = useTranslation();
@@ -28,6 +37,7 @@ export function ScanPage() {
   const [captured, setCaptured] = useState<CapturedImage | null>(null);
   const [ocrState, setOcrState] = useState<OcrState>({ kind: 'idle' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const guideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void start();
@@ -42,9 +52,13 @@ export function ScanPage() {
     if (!captured) return;
     setOcrState({ kind: 'processing' });
     try {
-      const titleRegion = await cropTopFraction(captured.blob, TITLE_REGION_FRACTION);
+      const cardRegion = captured.cardRect
+        ? await cropToRect(captured.blob, captured.cardRect)
+        : captured.blob;
+      const titleRegion = await cropTopFraction(cardRegion, TITLE_REGION_FRACTION);
+      const regionUrl = URL.createObjectURL(titleRegion);
       const result = await recognizeCardText(titleRegion);
-      setOcrState({ kind: 'done', result });
+      setOcrState({ kind: 'done', result, regionUrl });
     } catch {
       setOcrState({ kind: 'error' });
     }
@@ -58,12 +72,29 @@ export function ScanPage() {
     };
   }, [captured]);
 
+  // Revoke the OCR-region preview URL when leaving the 'done' state.
+  useEffect(() => {
+    if (ocrState.kind !== 'done') return;
+    const url = ocrState.regionUrl;
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [ocrState]);
+
   const handleCapture = async () => {
     if (!videoRef.current) return;
+    let cardRect: ImageRect | null = null;
+    if (guideRef.current) {
+      try {
+        cardRect = computeGuideRectInNative(videoRef.current, guideRef.current);
+      } catch {
+        cardRect = null;
+      }
+    }
     try {
       const blob = await captureFrame(videoRef.current);
       const url = URL.createObjectURL(blob);
-      acceptCapture({ blob, url });
+      acceptCapture({ blob, url, cardRect });
       stop();
     } catch {
       show({
@@ -86,7 +117,7 @@ export function ScanPage() {
     if (!file) return;
     stop();
     const url = URL.createObjectURL(file);
-    acceptCapture({ blob: file, url });
+    acceptCapture({ blob: file, url, cardRect: null });
   };
 
   if (captured) {
@@ -127,6 +158,16 @@ export function ScanPage() {
               <p className="mt-2 text-xs text-fg-muted">
                 {t('scan.ocr.confidence', { value: ocrState.result.confidence })}
               </p>
+              <div className="mt-3 border-t border-border pt-3">
+                <p className="text-xs uppercase tracking-wide text-fg-muted">
+                  {t('scan.ocr.regionLabel')}
+                </p>
+                <img
+                  src={ocrState.regionUrl}
+                  alt={t('scan.ocr.regionAlt')}
+                  className="mt-2 w-full rounded border border-border bg-black/20"
+                />
+              </div>
             </div>
           ) : null}
 
@@ -199,7 +240,10 @@ export function ScanPage() {
             className="pointer-events-none absolute inset-0 flex items-center justify-center"
             aria-hidden="true"
           >
-            <div className="aspect-[5/7] w-3/4 max-w-xs rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+            <div
+              ref={guideRef}
+              className="aspect-[5/7] w-3/4 max-w-xs rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"
+            />
           </div>
           <p
             className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-md bg-black/60 px-3 py-1 text-xs text-white"

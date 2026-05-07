@@ -589,7 +589,9 @@
       "detected": "Detected text",
       "empty": "No text detected.",
       "confidence": "Confidence: {{value}}%",
-      "error": "Recognition failed. Try again."
+      "error": "Recognition failed. Try again.",
+      "regionLabel": "Image sent to OCR",
+      "regionAlt": "Card region analysed by recognition"
     }
   },
   "profile": {
