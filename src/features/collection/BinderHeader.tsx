@@ -158,7 +158,7 @@ export function BinderHeader({
                 setMenuOpen(false);
                 setEmptyConfirm(true);
               }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-medium hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-medium hover:bg-fg/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Eraser className="h-4 w-4 text-fg-muted" aria-hidden="true" />
               {t('collection.binders.empty')}

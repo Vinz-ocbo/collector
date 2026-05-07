@@ -119,7 +119,11 @@ export function BinderFormPage({ mode }: BinderFormPageProps) {
   return (
     <>
       <PageHeader
-        title={mode === 'create' ? t('collection.binders.createTitle') : t('collection.binders.editTitle')}
+        title={
+          mode === 'create'
+            ? t('collection.binders.createTitle')
+            : t('collection.binders.editTitle')
+        }
         onBack={() => navigate(-1)}
       />
 
@@ -167,7 +171,11 @@ export function BinderFormPage({ mode }: BinderFormPageProps) {
 
         <div>
           <p className="mb-2 text-sm font-medium">{t('collection.binders.iconLabel')}</p>
-          <div role="radiogroup" aria-label={t('collection.binders.iconLabel')} className="grid grid-cols-4 gap-2">
+          <div
+            role="radiogroup"
+            aria-label={t('collection.binders.iconLabel')}
+            className="grid grid-cols-4 gap-2"
+          >
             {BINDER_ICONS.map((option) => {
               const active = option.id === icon;
               return (
@@ -184,7 +192,9 @@ export function BinderFormPage({ mode }: BinderFormPageProps) {
                       : 'border-border bg-bg-raised hover:bg-fg/5')
                   }
                 >
-                  <span aria-label={t(`collection.binders.icons.${option.id}`)}>{option.emoji}</span>
+                  <span aria-label={t(`collection.binders.icons.${option.id}`)}>
+                    {option.emoji}
+                  </span>
                 </button>
               );
             })}

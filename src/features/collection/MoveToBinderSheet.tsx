@@ -18,16 +18,14 @@ export function MoveToBinderSheet({ item, onOpenChange }: MoveToBinderSheetProps
 
   function handlePick(binderId: string | null, label: string) {
     if (!item) return;
-    void updateItem
-      .mutateAsync({ id: item.id, patch: { binderId } })
-      .then(() => {
-        onOpenChange(false);
-        show({
-          title: t('collection.move.toast.title'),
-          description: t('collection.move.toast.description', { name: item.card.name, label }),
-          tone: 'success',
-        });
+    void updateItem.mutateAsync({ id: item.id, patch: { binderId } }).then(() => {
+      onOpenChange(false);
+      show({
+        title: t('collection.move.toast.title'),
+        description: t('collection.move.toast.description', { name: item.card.name, label }),
+        tone: 'success',
       });
+    });
   }
 
   return (

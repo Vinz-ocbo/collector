@@ -2,21 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Search as SearchIcon, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  EmptyState,
-  Input,
-  PageHeader,
-  Skeleton,
-  Switch,
-  useToast,
-} from '@/shared/ui';
+import { Button, EmptyState, Input, PageHeader, Skeleton, Switch, useToast } from '@/shared/ui';
 import { useOwnedCounts } from '@/features/collection';
-import {
-  AddToCollectionSheet,
-  SearchResultRow,
-  useSearchCards,
-} from '@/features/search';
+import { AddToCollectionSheet, SearchResultRow, useSearchCards } from '@/features/search';
 import type { Card } from '@/shared/domain';
 
 export function AddManualPage() {

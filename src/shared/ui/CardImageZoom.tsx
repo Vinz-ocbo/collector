@@ -44,9 +44,7 @@ export function CardImageZoom({
           className={cn('fixed inset-0 z-50 animate-fade-in bg-bg-overlay/80')}
         />
         <DialogPrimitive.Content
-          className={cn(
-            'fixed inset-0 z-50 flex items-center justify-center p-4 outline-none',
-          )}
+          className={cn('fixed inset-0 z-50 flex items-center justify-center p-4 outline-none')}
           aria-describedby={undefined}
         >
           <DialogPrimitive.Title className="sr-only">{card.name}</DialogPrimitive.Title>

@@ -15,14 +15,8 @@ afterEach(async () => {
 describe('LanguageSwitcher', () => {
   it('marks the current language as the active radio', () => {
     render(<LanguageSwitcher />);
-    expect(screen.getByRole('radio', { name: 'Français' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
-    expect(screen.getByRole('radio', { name: 'English' })).toHaveAttribute(
-      'aria-checked',
-      'false',
-    );
+    expect(screen.getByRole('radio', { name: 'Français' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'English' })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('switches the i18n language when another option is picked', async () => {
@@ -38,9 +32,6 @@ describe('LanguageSwitcher', () => {
     });
 
     expect(i18n.resolvedLanguage ?? i18n.language).toBe('en');
-    expect(screen.getByRole('radio', { name: 'English' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+    expect(screen.getByRole('radio', { name: 'English' })).toHaveAttribute('aria-checked', 'true');
   });
 });

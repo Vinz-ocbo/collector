@@ -255,127 +255,127 @@ export function CollectionPage() {
   );
   const binderTotalValueEur = useMemo(
     () =>
-      items
-        ? items.reduce((sum, item) => sum + (item.card.prices.eur ?? 0) * item.quantity, 0)
-        : 0,
+      items ? items.reduce((sum, item) => sum + (item.card.prices.eur ?? 0) * item.quantity, 0) : 0,
     [items],
   );
 
   return (
     <>
       <PullToRefresh onRefresh={handleRefresh} label={t('collection.pullToRefresh')}>
-      {binderId ? (
-        <BinderHeader
-          binderId={binderId}
-          itemCount={binderTotalQuantity}
-          totalValueEur={binderTotalValueEur}
-          locale={i18n.language}
-          onAfterDelete={() => navigate('/collection/binders', { replace: true })}
-        />
-      ) : (
-        <PageHeader
-          title={
-            items ? t('collection.titleWithCount', { count: items.length }) : t('collection.title')
-          }
-          sticky={false}
-        />
-      )}
-
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
-        <button
-          type="button"
-          onClick={() => setSortOpen(true)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
-        >
-          <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
-          {t(`collection.sort.${SORT_SHORT_KEYS[sort]}`)}
-        </button>
-        <button
-          type="button"
-          onClick={() => setFiltersOpen(true)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
-        >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-          {t('collection.filters.label')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewOpen(true)}
-          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
-        >
-          {t(`collection.view.${VIEW_KEYS[view]}`)}
-        </button>
-      </div>
-
-      {activeChips.length > 0 ? (
-        <div className="flex flex-wrap gap-2 px-3 pb-2">
-          {activeChips.map((chip) => {
-            const label = chip.count
-              ? t(`collection.filters.${chip.labelKey}`, { count: chip.count })
-              : t(`collection.filters.${chip.labelKey}`);
-            return (
-              <Chip
-                key={chip.key}
-                size="sm"
-                active
-                onClick={() => setFilter(chip.clear())}
-                onRemove={() => setFilter(chip.clear())}
-                removeLabel={t('collection.filters.removeChip', { label })}
-              >
-                {label}
-              </Chip>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setFilter({})}
-            className="inline-flex items-center gap-1 rounded-md px-2 text-xs text-fg-muted hover:text-fg"
-          >
-            <X className="h-3 w-3" aria-hidden="true" />
-            {t('collection.filters.clearAll')}
-          </button>
-        </div>
-      ) : null}
-
-      {isPending ? (
-        <div className="grid grid-cols-2 gap-3 px-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <Skeleton key={idx} className="aspect-[5/7] w-full" />
-          ))}
-        </div>
-      ) : isError ? (
-        <EmptyState
-          title={t('collection.error.title')}
-          description={t('collection.error.description')}
-        />
-      ) : items.length === 0 ? (
-        activeChips.length === 0 ? (
-          <EmptyState
-            icon={<Library className="h-12 w-12" />}
-            title={t('collection.empty.title')}
-            description={t('collection.empty.description')}
-            action={
-              <Button onClick={() => void handleSeed()} disabled={seed.isPending}>
-                {seed.isPending
-                  ? t('collection.empty.loadingDemo')
-                  : t('collection.empty.loadDemo')}
-              </Button>
-            }
+        {binderId ? (
+          <BinderHeader
+            binderId={binderId}
+            itemCount={binderTotalQuantity}
+            totalValueEur={binderTotalValueEur}
+            locale={i18n.language}
+            onAfterDelete={() => navigate('/collection/binders', { replace: true })}
           />
         ) : (
-          <EmptyState
-            title={t('collection.emptyFiltered.title')}
-            description={t('collection.emptyFiltered.description')}
-            action={
-              <Button variant="secondary" onClick={() => setFilter({})}>
-                {t('collection.emptyFiltered.reset')}
-              </Button>
+          <PageHeader
+            title={
+              items
+                ? t('collection.titleWithCount', { count: items.length })
+                : t('collection.title')
             }
+            sticky={false}
           />
-        )
-      ) : (
-        <CollectionList items={items} mode={view} onItemMenu={setMenuItem} />
-      )}
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setSortOpen(true)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
+          >
+            <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
+            {t(`collection.sort.${SORT_SHORT_KEYS[sort]}`)}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
+          >
+            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+            {t('collection.filters.label')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewOpen(true)}
+            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-fg-muted hover:bg-fg/5"
+          >
+            {t(`collection.view.${VIEW_KEYS[view]}`)}
+          </button>
+        </div>
+
+        {activeChips.length > 0 ? (
+          <div className="flex flex-wrap gap-2 px-3 pb-2">
+            {activeChips.map((chip) => {
+              const label = chip.count
+                ? t(`collection.filters.${chip.labelKey}`, { count: chip.count })
+                : t(`collection.filters.${chip.labelKey}`);
+              return (
+                <Chip
+                  key={chip.key}
+                  size="sm"
+                  active
+                  onClick={() => setFilter(chip.clear())}
+                  onRemove={() => setFilter(chip.clear())}
+                  removeLabel={t('collection.filters.removeChip', { label })}
+                >
+                  {label}
+                </Chip>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setFilter({})}
+              className="inline-flex items-center gap-1 rounded-md px-2 text-xs text-fg-muted hover:text-fg"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
+              {t('collection.filters.clearAll')}
+            </button>
+          </div>
+        ) : null}
+
+        {isPending ? (
+          <div className="grid grid-cols-2 gap-3 px-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Skeleton key={idx} className="aspect-[5/7] w-full" />
+            ))}
+          </div>
+        ) : isError ? (
+          <EmptyState
+            title={t('collection.error.title')}
+            description={t('collection.error.description')}
+          />
+        ) : items.length === 0 ? (
+          activeChips.length === 0 ? (
+            <EmptyState
+              icon={<Library className="h-12 w-12" />}
+              title={t('collection.empty.title')}
+              description={t('collection.empty.description')}
+              action={
+                <Button onClick={() => void handleSeed()} disabled={seed.isPending}>
+                  {seed.isPending
+                    ? t('collection.empty.loadingDemo')
+                    : t('collection.empty.loadDemo')}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              title={t('collection.emptyFiltered.title')}
+              description={t('collection.emptyFiltered.description')}
+              action={
+                <Button variant="secondary" onClick={() => setFilter({})}>
+                  {t('collection.emptyFiltered.reset')}
+                </Button>
+              }
+            />
+          )
+        ) : (
+          <CollectionList items={items} mode={view} onItemMenu={setMenuItem} />
+        )}
       </PullToRefresh>
 
       <FiltersSheet

@@ -54,5 +54,4 @@ describe('CardImageZoom', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
-
 });

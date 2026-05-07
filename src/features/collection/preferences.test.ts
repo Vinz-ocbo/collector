@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db, setPreference } from '@/shared/db';
-import {
-  DEFAULT_VIEW_PREFS,
-  getCollectionViewPrefs,
-  setCollectionViewPrefs,
-} from './preferences';
+import { DEFAULT_VIEW_PREFS, getCollectionViewPrefs, setCollectionViewPrefs } from './preferences';
 
 beforeEach(async () => {
   await db.delete();

@@ -148,7 +148,10 @@ export function PullToRefresh({
       <div
         style={
           offset > 0 || isRefreshing
-            ? { transform: `translateY(${offset}px)`, transition: isRefreshing ? 'none' : undefined }
+            ? {
+                transform: `translateY(${offset}px)`,
+                transition: isRefreshing ? 'none' : undefined,
+              }
             : { transition: 'transform 200ms ease-out' }
         }
       >
