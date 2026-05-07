@@ -111,5 +111,16 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ['dist', 'node_modules', 'coverage', 'playwright-report', '.eslintrc.cjs'],
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    'coverage',
+    'playwright-report',
+    '.eslintrc.cjs',
+    // backend/ has its own root ESLint config, its own tsconfig, and its own
+    // node_modules (Fastify, Drizzle, …). The root lint command runs `npm ci`
+    // against the front package only, so backend/* files would lint with
+    // unresolved types and trigger every no-unsafe-* rule.
+    'backend/**',
+  ],
 };
