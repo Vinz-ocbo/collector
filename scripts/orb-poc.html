@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>ORB POC — Magic card recognition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --fg: #e6e6e6;
+        --fg-muted: #9aa0a6;
+        --bg: #111;
+        --bg-raised: #1c1c1c;
+        --border: #333;
+        --accent: #6cf;
+        --good: #6c6;
+        --bad: #f66;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        padding: 1.5rem;
+        max-width: 1100px;
+        margin-inline: auto;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      p {
+        line-height: 1.5;
+      }
+      .drop {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .drop.over {
+        border-color: var(--accent);
+      }
+      .drop input {
+        display: none;
+      }
+      .row {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 1rem;
+      }
+      .row img.preview {
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        background: #000;
+      }
+      .row .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .row label {
+        font-size: 0.85rem;
+        color: var(--fg-muted);
+      }
+      .row input[type='text'] {
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.5rem;
+        font: inherit;
+      }
+      button {
+        background: var(--accent);
+        color: #000;
+        border: 0;
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+      }
+      button:disabled {
+        background: #444;
+        color: #888;
+        cursor: not-allowed;
+      }
+      .matches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+      }
+      .match {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+      .match.target {
+        border-color: var(--good);
+      }
+      .match img {
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+      }
+      .match .score {
+        font-weight: 600;
+      }
+      .match.target .score {
+        color: var(--good);
+      }
+      .status {
+        font-size: 0.85rem;
+        color: var(--fg-muted);
+      }
+      .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .setup {
+        margin: 1rem 0;
+        padding: 0.75rem;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ORB POC — Magic card recognition</h1>
+    <p>
+      Variante du POC pHash, mais avec <strong>ORB feature matching</strong> via OpenCV.js. Plus
+      lourd (lib ~9 MB chargée depuis CDN à l'initialisation), mais c'est l'algo des vraies apps de
+      scan : robuste à la perspective, à la lumière, et au cadrage approximatif.
+    </p>
+    <p>
+      Pour chaque comparaison : on extrait ~500 keypoints + descripteurs binaires sur chaque image,
+      on matche par distance de Hamming, on filtre par le test du ratio de Lowe (un match est
+      "bon" seulement si le 2e-meilleur est >25% plus loin). Le score = nombre de good matches.
+      <strong>Plus c'est haut, mieux c'est.</strong>
+    </p>
+
+    <div class="setup">
+      <div class="status">
+        OpenCV.js : <span id="cvStatus">non chargé</span>
+        <button id="loadCv" style="margin-left: 0.5rem; padding: 0.25rem 0.75rem">Charger</button>
+      </div>
+      <div class="status" style="margin-top: 0.5rem">
+        Corpus de bruit : <span id="noiseStatus">non chargé</span>
+        <button id="loadNoise" style="margin-left: 0.5rem; padding: 0.25rem 0.75rem" disabled>
+          Charger le bruit (~50 cartes)
+        </button>
+      </div>
+    </div>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" multiple accept="image/*" />
+      <span>Clique ou dépose tes photos ici</span>
+    </label>
+
+    <div id="rows"></div>
+
+    <div class="actions" id="actions" style="display: none">
+      <button id="run" disabled>Lancer la comparaison</button>
+      <button id="clear" style="background: #444; color: var(--fg)">Tout effacer</button>
+    </div>
+
+    <p class="status" id="status"></p>
+
+    <script>
+      // OpenCV.js loader. Sets `cv` global once initialised.
+      let cvReady = null;
+      function loadOpenCv() {
+        if (cvReady) return cvReady;
+        cvReady = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://docs.opencv.org/4.10.0/opencv.js';
+          script.onload = () => {
+            // OpenCV.js sets `cv` as a Promise-like Module that resolves when ready.
+            const onReady = () => resolve();
+            if (window.cv && window.cv.Mat) onReady();
+            else if (window.cv && typeof window.cv.then === 'function') {
+              window.cv.then((moduleScope) => {
+                window.cv = moduleScope;
+                onReady();
+              });
+            } else if (window.cv) {
+              window.cv.onRuntimeInitialized = onReady;
+            } else {
+              reject(new Error('cv global not found after script load'));
+            }
+          };
+          script.onerror = () => reject(new Error('OpenCV.js download failed'));
+          document.head.appendChild(script);
+        });
+        return cvReady;
+      }
+    </script>
+
+    <script type="module">
+      // ---------------- Image loading ----------------
+
+      function loadImageFromUrl(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Image load failed: ' + url));
+          img.src = url;
+        });
+      }
+
+      function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Image load failed'));
+          };
+          img.src = url;
+        });
+      }
+
+      // ---------------- ORB feature extraction ----------------
+
+      const MAX_KEYPOINTS = 500;
+      const TARGET_WIDTH = 480; // Resize all images to this width before ORB
+
+      /**
+       * Extract ORB descriptors from an HTMLImageElement.
+       * Returns { keypoints, descriptors } — caller must .delete() both.
+       * Resizes the image to a fixed width to normalise compute cost.
+       */
+      function extractOrb(img) {
+        const cv = window.cv;
+        // Draw onto canvas at target resolution preserving aspect.
+        const scale = TARGET_WIDTH / img.naturalWidth;
+        const w = TARGET_WIDTH;
+        const h = Math.round(img.naturalHeight * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const src = cv.imread(canvas);
+        const gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        src.delete();
+
+        const orb = new cv.ORB(MAX_KEYPOINTS);
+        const keypoints = new cv.KeyPointVector();
+        const descriptors = new cv.Mat();
+        orb.detect(gray, keypoints);
+        orb.compute(gray, keypoints, descriptors);
+        gray.delete();
+        orb.delete();
+        return { keypoints, descriptors };
+      }
+
+      /**
+       * Match two ORB descriptor sets using BFMatcher with Hamming distance,
+       * then filter by Lowe's ratio test (k=2, threshold 0.75).
+       * Returns the count of "good" matches.
+       */
+      function countGoodMatches(descA, descB) {
+        const cv = window.cv;
+        if (descA.rows < 2 || descB.rows < 2) return 0;
+        const matcher = new cv.BFMatcher(cv.NORM_HAMMING, false);
+        const knnMatches = new cv.DMatchVectorVector();
+        try {
+          matcher.knnMatch(descA, descB, knnMatches, 2);
+          let good = 0;
+          for (let i = 0; i < knnMatches.size(); i++) {
+            const pair = knnMatches.get(i);
+            if (pair.size() === 2) {
+              const m = pair.get(0);
+              const n = pair.get(1);
+              if (m.distance < 0.75 * n.distance) good++;
+            }
+            pair.delete();
+          }
+          return good;
+        } finally {
+          knnMatches.delete();
+          matcher.delete();
+        }
+      }
+
+      // ---------------- Scryfall ----------------
+
+      async function fetchPrintings(cardName) {
+        const url = `https://api.scryfall.com/cards/search?q=!${encodeURIComponent(`"${cardName}"`)}&unique=prints`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (res.status === 404) return [];
+          throw new Error(`Scryfall ${res.status}: ${url}`);
+        }
+        const data = await res.json();
+        return data.data;
+      }
+
+      async function fetchNoiseCards() {
+        // Single page = 175 random creatures. We trim to 50 to keep ORB matching tractable.
+        const url = `https://api.scryfall.com/cards/search?q=t%3Acreature&unique=cards&order=random`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Scryfall ${res.status}: ${url}`);
+        const data = await res.json();
+        return data.data.slice(0, 50);
+      }
+
+      // ---------------- UI ----------------
+
+      const dropEl = document.getElementById('drop');
+      const fileEl = document.getElementById('file');
+      const rowsEl = document.getElementById('rows');
+      const actionsEl = document.getElementById('actions');
+      const runEl = document.getElementById('run');
+      const clearEl = document.getElementById('clear');
+      const statusEl = document.getElementById('status');
+      const cvStatusEl = document.getElementById('cvStatus');
+      const loadCvBtn = document.getElementById('loadCv');
+      const noiseStatusEl = document.getElementById('noiseStatus');
+      const loadNoiseBtn = document.getElementById('loadNoise');
+
+      const items = [];
+      let noiseCorpus = null; // Array of { card, descriptors, thumbUrl }
+
+      loadCvBtn.addEventListener('click', async () => {
+        loadCvBtn.disabled = true;
+        cvStatusEl.textContent = 'Téléchargement (~9 MB) + init WASM…';
+        try {
+          await window.loadOpenCv();
+          cvStatusEl.textContent = 'OpenCV ready';
+          loadCvBtn.style.display = 'none';
+          loadNoiseBtn.disabled = false;
+        } catch (err) {
+          cvStatusEl.textContent = 'Erreur : ' + err.message;
+          loadCvBtn.disabled = false;
+        }
+      });
+
+      loadNoiseBtn.addEventListener('click', async () => {
+        loadNoiseBtn.disabled = true;
+        try {
+          noiseStatusEl.textContent = 'Récup. cartes Scryfall…';
+          const cards = await fetchNoiseCards();
+          noiseStatusEl.textContent = `${cards.length} cartes — extraction ORB…`;
+          noiseCorpus = [];
+          for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const imgUrls = card.image_uris ?? card.card_faces?.[0]?.image_uris ?? null;
+            if (!imgUrls?.normal) continue;
+            try {
+              const img = await loadImageFromUrl(imgUrls.normal);
+              const { keypoints, descriptors } = extractOrb(img);
+              keypoints.delete(); // we only keep descriptors for matching
+              noiseCorpus.push({
+                card,
+                descriptors,
+                thumbUrl: imgUrls.small ?? imgUrls.normal,
+              });
+            } catch (err) {
+              console.warn('Failed to extract ORB for noise card:', card.id, err);
+            }
+            noiseStatusEl.textContent = `ORB ${i + 1}/${cards.length}…`;
+          }
+          noiseStatusEl.textContent = `${noiseCorpus.length} cartes prêtes`;
+          loadNoiseBtn.style.display = 'none';
+          checkRunReady();
+        } catch (err) {
+          noiseStatusEl.textContent = 'Erreur : ' + err.message;
+          console.error(err);
+          loadNoiseBtn.disabled = false;
+        }
+      });
+
+      function checkRunReady() {
+        runEl.disabled = !(noiseCorpus && items.length > 0);
+      }
+
+      dropEl.addEventListener('click', () => fileEl.click());
+      dropEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropEl.classList.add('over');
+      });
+      dropEl.addEventListener('dragleave', () => dropEl.classList.remove('over'));
+      dropEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropEl.classList.remove('over');
+        addFiles(e.dataTransfer.files);
+      });
+      fileEl.addEventListener('change', (e) => addFiles(e.target.files));
+      clearEl.addEventListener('click', () => {
+        items.length = 0;
+        rowsEl.innerHTML = '';
+        actionsEl.style.display = 'none';
+        checkRunReady();
+      });
+
+      function addFiles(files) {
+        for (const file of files) {
+          const previewUrl = URL.createObjectURL(file);
+          const baseName = file.name
+            .replace(/\.[^.]+$/, '')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <img class="preview" src="${previewUrl}" />
+            <div class="meta">
+              <label>Nom de la carte (en anglais)</label>
+              <input type="text" value="${escapeHtml(baseName)}" />
+              <div class="status"></div>
+              <div class="matches"></div>
+            </div>
+          `;
+          rowsEl.appendChild(row);
+          items.push({
+            file,
+            previewUrl,
+            input: row.querySelector('input'),
+            statusEl: row.querySelector('.status'),
+            matchesEl: row.querySelector('.matches'),
+          });
+        }
+        actionsEl.style.display = items.length > 0 ? 'flex' : 'none';
+        checkRunReady();
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      runEl.addEventListener('click', async () => {
+        runEl.disabled = true;
+        statusEl.textContent = 'Calcul ORB sur les photos + cartes…';
+        try {
+          for (const item of items) {
+            await processItem(item);
+          }
+          statusEl.textContent = 'Terminé.';
+        } catch (err) {
+          statusEl.textContent = 'Erreur : ' + err.message;
+          console.error(err);
+        } finally {
+          runEl.disabled = false;
+        }
+      });
+
+      async function processItem(item) {
+        item.matchesEl.innerHTML = '';
+        item.statusEl.textContent = 'ORB sur photo…';
+        const photoImg = await loadImageFromFile(item.file);
+        const photoFeatures = extractOrb(photoImg);
+        try {
+          const cardName = item.input.value.trim();
+          if (!cardName) {
+            item.statusEl.textContent = 'Pas de nom donné, sauté.';
+            return;
+          }
+
+          item.statusEl.textContent = `Récup. éditions de "${cardName}"…`;
+          const printings = await fetchPrintings(cardName);
+          if (printings.length === 0) {
+            item.statusEl.textContent = `Aucune édition trouvée pour "${cardName}". Vérifie l'orthographe (anglais).`;
+            return;
+          }
+
+          item.statusEl.textContent = `ORB sur ${printings.length} éditions…`;
+          const targets = [];
+          for (const card of printings) {
+            const imgUrls = card.image_uris ?? card.card_faces?.[0]?.image_uris ?? null;
+            if (!imgUrls?.normal) continue;
+            try {
+              const img = await loadImageFromUrl(imgUrls.normal);
+              const { keypoints, descriptors } = extractOrb(img);
+              keypoints.delete();
+              targets.push({
+                card,
+                descriptors,
+                thumbUrl: imgUrls.small ?? imgUrls.normal,
+                isTarget: true,
+              });
+            } catch (err) {
+              console.warn('Failed to extract ORB for printing:', card.id, err);
+            }
+          }
+
+          item.statusEl.textContent = `Matching contre ${targets.length} targets + ${noiseCorpus.length} bruit…`;
+          const allCandidates = [
+            ...targets,
+            ...noiseCorpus.map((n) => ({ ...n, isTarget: false })),
+          ];
+          const results = allCandidates.map((c) => ({
+            ...c,
+            score: countGoodMatches(photoFeatures.descriptors, c.descriptors),
+          }));
+          results.sort((a, b) => b.score - a.score); // higher score = better match
+
+          // Cleanup target descriptors (keep noise corpus alive for reuse).
+          for (const t of targets) t.descriptors.delete();
+
+          const topTargetRank = results.findIndex((r) => r.isTarget);
+          const topTargetScore = results[topTargetRank]?.score;
+          const topNoiseScore = results.find((r) => !r.isTarget)?.score;
+          const margin =
+            topNoiseScore !== undefined && topTargetScore !== undefined
+              ? topTargetScore - topNoiseScore
+              : null;
+
+          item.statusEl.textContent =
+            `Top target rang #${topTargetRank + 1} (${topTargetScore} matches) — ` +
+            `top noise: ${topNoiseScore} matches — marge: ${margin ?? 'n/a'} ` +
+            `sur ${results.length} candidats`;
+
+          for (let i = 0; i < Math.min(10, results.length); i++) {
+            const r = results[i];
+            const cardEl = document.createElement('div');
+            cardEl.className = 'match ' + (r.isTarget ? 'target' : '');
+            cardEl.innerHTML = `
+              <img src="${r.thumbUrl}" />
+              <div>${escapeHtml(r.card.name)}</div>
+              <div style="font-size: 0.7rem; color: var(--fg-muted)">${escapeHtml(r.card.set_name ?? '')} (${escapeHtml(r.card.set?.toUpperCase() ?? '')})</div>
+              <div class="score">${r.score} matches${r.isTarget ? ' ✓' : ''}</div>
+            `;
+            item.matchesEl.appendChild(cardEl);
+          }
+        } finally {
+          photoFeatures.keypoints.delete();
+          photoFeatures.descriptors.delete();
+        }
+      }
+    </script>
+  </body>
+</html>

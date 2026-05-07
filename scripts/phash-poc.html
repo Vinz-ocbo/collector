@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>pHash POC — Magic card recognition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --fg: #e6e6e6;
+        --fg-muted: #9aa0a6;
+        --bg: #111;
+        --bg-raised: #1c1c1c;
+        --border: #333;
+        --accent: #6cf;
+        --good: #6c6;
+        --bad: #f66;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        padding: 1.5rem;
+        max-width: 1100px;
+        margin-inline: auto;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      p {
+        line-height: 1.5;
+      }
+      .drop {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .drop.over {
+        border-color: var(--accent);
+      }
+      .drop input {
+        display: none;
+      }
+      .row {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 1rem;
+      }
+      .row img.preview {
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        background: #000;
+      }
+      .row .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .row label {
+        font-size: 0.85rem;
+        color: var(--fg-muted);
+      }
+      .row input[type='text'] {
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.5rem;
+        font: inherit;
+      }
+      button {
+        background: var(--accent);
+        color: #000;
+        border: 0;
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+      }
+      button:disabled {
+        background: #444;
+        color: #888;
+        cursor: not-allowed;
+      }
+      .matches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+      }
+      .match {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+      .match.best {
+        border-color: var(--good);
+      }
+      .match img {
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+      }
+      .match .distance {
+        font-weight: 600;
+      }
+      .match.best .distance {
+        color: var(--good);
+      }
+      .match.far .distance {
+        color: var(--bad);
+      }
+      .status {
+        font-size: 0.85rem;
+        color: var(--fg-muted);
+      }
+      .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>pHash POC — Magic card recognition</h1>
+    <p>
+      Pose tes photos de cartes (caméra téléphone, conditions normales). Pour chacune, tape le nom
+      exact en anglais (Scryfall ne connaît que l’anglais en recherche par nom).
+    </p>
+    <p>
+      Le script charge d’abord un <strong>corpus de bruit</strong> de ~200 cartes aléatoires
+      Scryfall (à ne charger qu’une fois — patience). Puis pour chaque photo, il fetch les éditions
+      de la carte nommée, hash tout, et compare ta photo contre <strong
+        >l’ensemble {bonne carte + bruit}</strong
+      >. Le top-10 affiche les meilleurs candidats — la bonne carte doit ressortir parmi les
+      premiers, pas perdue dans le bruit.
+    </p>
+    <p class="status">
+      Corpus de bruit : <span id="noiseStatus">non chargé</span>
+      <button id="loadNoise" style="margin-left: 0.5rem; padding: 0.25rem 0.75rem">
+        Charger le bruit
+      </button>
+    </p>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" multiple accept="image/*" />
+      <span>Clique ou dépose tes photos ici</span>
+    </label>
+
+    <div id="rows"></div>
+
+    <div class="actions" id="actions" style="display: none">
+      <button id="run">Lancer la comparaison</button>
+      <button id="clear" style="background: #444; color: var(--fg)">Tout effacer</button>
+    </div>
+
+    <p class="status" id="status"></p>
+
+    <script type="module">
+      // ---------------- pHash (DCT-based, 64-bit) ----------------
+
+      function dct1d(input) {
+        const N = input.length;
+        const output = new Float64Array(N);
+        for (let k = 0; k < N; k++) {
+          let sum = 0;
+          for (let n = 0; n < N; n++) {
+            sum += input[n] * Math.cos(((2 * n + 1) * k * Math.PI) / (2 * N));
+          }
+          output[k] = sum * (k === 0 ? 1 / Math.sqrt(N) : Math.sqrt(2 / N));
+        }
+        return output;
+      }
+
+      function dct2d(matrix, N) {
+        // Apply 1D DCT to each row, then to each column.
+        const rowDct = matrix.map((row) => dct1d(row));
+        const result = Array.from({ length: N }, () => new Float64Array(N));
+        for (let x = 0; x < N; x++) {
+          const col = new Float64Array(N);
+          for (let y = 0; y < N; y++) col[y] = rowDct[y][x];
+          const colDct = dct1d(col);
+          for (let y = 0; y < N; y++) result[y][x] = colDct[y];
+        }
+        return result;
+      }
+
+      async function pHashFromImage(img) {
+        // Draw resized + grayscale onto a 32x32 canvas.
+        const N = 32;
+        const canvas = document.createElement('canvas');
+        canvas.width = N;
+        canvas.height = N;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, N, N);
+
+        const { data } = ctx.getImageData(0, 0, N, N);
+        const matrix = [];
+        for (let y = 0; y < N; y++) {
+          const row = new Float64Array(N);
+          for (let x = 0; x < N; x++) {
+            const idx = (y * N + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            row[x] = 0.299 * r + 0.587 * g + 0.114 * b;
+          }
+          matrix.push(row);
+        }
+        const dct = dct2d(matrix, N);
+
+        // Top-left 8x8 = low frequencies.
+        const lowFreq = [];
+        for (let y = 0; y < 8; y++) {
+          for (let x = 0; x < 8; x++) {
+            lowFreq.push(dct[y][x]);
+          }
+        }
+        // Median, excluding the DC term (index 0).
+        const sorted = [...lowFreq.slice(1)].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+
+        let hash = 0n;
+        for (let i = 0; i < 64; i++) {
+          if (lowFreq[i] > median) hash |= 1n << BigInt(i);
+        }
+        return hash;
+      }
+
+      function hammingDistance(a, b) {
+        let xor = a ^ b;
+        let count = 0;
+        while (xor) {
+          if (xor & 1n) count++;
+          xor >>= 1n;
+        }
+        return count;
+      }
+
+      // ---------------- Image loading ----------------
+
+      function loadImageFromUrl(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Image load failed: ' + url));
+          img.src = url;
+        });
+      }
+
+      function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Image load failed'));
+          };
+          img.src = url;
+        });
+      }
+
+      // ---------------- Scryfall ----------------
+
+      async function fetchPrintings(cardName) {
+        // !"Lightning Bolt" exact-match + unique=prints returns every printing.
+        const url = `https://api.scryfall.com/cards/search?q=!${encodeURIComponent(`"${cardName}"`)}&unique=prints`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (res.status === 404) return [];
+          throw new Error(`Scryfall ${res.status}: ${url}`);
+        }
+        const data = await res.json();
+        return data.data;
+      }
+
+      /**
+       * Fetch ~175 random cards from Scryfall as noise. Filter to creatures so
+       * we get a diverse set of art styles rather than 175 lands. Single page
+       * call (per_page max = 175). Caller can call multiple times for more.
+       */
+      async function fetchNoiseCards() {
+        const url = `https://api.scryfall.com/cards/search?q=t%3Acreature&unique=cards&order=random`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Scryfall ${res.status}: ${url}`);
+        const data = await res.json();
+        return data.data;
+      }
+
+      // ---------------- UI ----------------
+
+      const dropEl = document.getElementById('drop');
+      const fileEl = document.getElementById('file');
+      const rowsEl = document.getElementById('rows');
+      const actionsEl = document.getElementById('actions');
+      const runEl = document.getElementById('run');
+      const clearEl = document.getElementById('clear');
+      const statusEl = document.getElementById('status');
+
+      const items = []; // { file, name, previewUrl, matchesEl }
+
+      // Cached noise corpus: { card, hash, thumbUrl } pre-hashed so per-photo
+      // comparison is fast.
+      let noiseCorpus = null;
+      const noiseStatusEl = document.getElementById('noiseStatus');
+      const loadNoiseBtn = document.getElementById('loadNoise');
+
+      loadNoiseBtn.addEventListener('click', async () => {
+        loadNoiseBtn.disabled = true;
+        try {
+          noiseStatusEl.textContent = 'Récup. cartes Scryfall…';
+          const cards = await fetchNoiseCards();
+          noiseStatusEl.textContent = `${cards.length} cartes récupérées, calcul des pHashes…`;
+          noiseCorpus = [];
+          for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const imgUrls = card.image_uris ?? card.card_faces?.[0]?.image_uris ?? null;
+            if (!imgUrls?.normal) continue;
+            try {
+              const img = await loadImageFromUrl(imgUrls.normal);
+              const hash = await pHashFromImage(img);
+              noiseCorpus.push({
+                card,
+                hash,
+                thumbUrl: imgUrls.small ?? imgUrls.normal,
+              });
+            } catch (err) {
+              console.warn('Failed to hash noise card:', card.id, err);
+            }
+            noiseStatusEl.textContent = `Hash ${i + 1}/${cards.length}…`;
+          }
+          noiseStatusEl.textContent = `${noiseCorpus.length} cartes prêtes`;
+          loadNoiseBtn.style.display = 'none';
+        } catch (err) {
+          noiseStatusEl.textContent = 'Erreur : ' + err.message;
+          console.error(err);
+          loadNoiseBtn.disabled = false;
+        }
+      });
+
+      dropEl.addEventListener('click', () => fileEl.click());
+      dropEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropEl.classList.add('over');
+      });
+      dropEl.addEventListener('dragleave', () => dropEl.classList.remove('over'));
+      dropEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropEl.classList.remove('over');
+        addFiles(e.dataTransfer.files);
+      });
+      fileEl.addEventListener('change', (e) => addFiles(e.target.files));
+      clearEl.addEventListener('click', () => {
+        items.length = 0;
+        rowsEl.innerHTML = '';
+        actionsEl.style.display = 'none';
+      });
+
+      function addFiles(files) {
+        for (const file of files) {
+          const previewUrl = URL.createObjectURL(file);
+          // Default name = filename without extension, with dashes/underscores replaced by spaces.
+          const baseName = file.name
+            .replace(/\.[^.]+$/, '')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <img class="preview" src="${previewUrl}" />
+            <div class="meta">
+              <label>Nom de la carte (en anglais)</label>
+              <input type="text" value="${escapeHtml(baseName)}" />
+              <div class="status"></div>
+              <div class="matches"></div>
+            </div>
+          `;
+          rowsEl.appendChild(row);
+          items.push({
+            file,
+            previewUrl,
+            input: row.querySelector('input'),
+            statusEl: row.querySelector('.status'),
+            matchesEl: row.querySelector('.matches'),
+          });
+        }
+        actionsEl.style.display = items.length > 0 ? 'flex' : 'none';
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      runEl.addEventListener('click', async () => {
+        runEl.disabled = true;
+        statusEl.textContent = 'Calcul des pHashes…';
+        try {
+          for (const item of items) {
+            await processItem(item);
+          }
+          statusEl.textContent = 'Terminé.';
+        } catch (err) {
+          statusEl.textContent = 'Erreur : ' + err.message;
+          console.error(err);
+        } finally {
+          runEl.disabled = false;
+        }
+      });
+
+      async function processItem(item) {
+        item.matchesEl.innerHTML = '';
+        if (!noiseCorpus) {
+          item.statusEl.textContent =
+            'Charge d’abord le corpus de bruit (bouton en haut).';
+          return;
+        }
+        item.statusEl.textContent = 'Hash photo…';
+        const photoImg = await loadImageFromFile(item.file);
+        const photoHash = await pHashFromImage(photoImg);
+
+        const cardName = item.input.value.trim();
+        if (!cardName) {
+          item.statusEl.textContent = 'Pas de nom donné, sauté.';
+          return;
+        }
+
+        item.statusEl.textContent = `Récup. éditions de "${cardName}"…`;
+        const printings = await fetchPrintings(cardName);
+        if (printings.length === 0) {
+          item.statusEl.textContent = `Aucune édition trouvée pour "${cardName}". Vérifie l’orthographe (anglais).`;
+          return;
+        }
+
+        item.statusEl.textContent = `Hash de ${printings.length} éditions…`;
+        const targets = [];
+        for (const card of printings) {
+          const imgUrls = card.image_uris ?? card.card_faces?.[0]?.image_uris ?? null;
+          if (!imgUrls?.normal) continue;
+          try {
+            const refImg = await loadImageFromUrl(imgUrls.normal);
+            const refHash = await pHashFromImage(refImg);
+            targets.push({
+              card,
+              hash: refHash,
+              thumbUrl: imgUrls.small ?? imgUrls.normal,
+              isTarget: true,
+            });
+          } catch (err) {
+            console.warn('Failed to hash printing:', card.id, err);
+          }
+        }
+
+        // Combine: target printings + noise corpus. Compute distance, sort.
+        const allCandidates = [
+          ...targets,
+          ...noiseCorpus.map((n) => ({ ...n, isTarget: false })),
+        ];
+        const results = allCandidates
+          .map((c) => ({ ...c, dist: hammingDistance(photoHash, c.hash) }))
+          .sort((a, b) => a.dist - b.dist);
+
+        const topTargetRank = results.findIndex((r) => r.isTarget);
+        const topTargetDist = results[topTargetRank]?.dist;
+        const topNoiseDist = results.find((r) => !r.isTarget)?.dist;
+        const margin =
+          topNoiseDist !== undefined && topTargetDist !== undefined
+            ? topNoiseDist - topTargetDist
+            : null;
+
+        item.statusEl.textContent =
+          `Top target rang #${topTargetRank + 1} (${topTargetDist} bits) — ` +
+          `top noise: ${topNoiseDist} bits — marge: ${margin ?? 'n/a'} bits ` +
+          `sur ${results.length} candidats`;
+
+        // Render top 10 matches.
+        for (let i = 0; i < Math.min(10, results.length); i++) {
+          const r = results[i];
+          const cls = r.isTarget
+            ? 'best'
+            : r.dist <= 15
+              ? 'far'
+              : r.dist >= 30
+                ? ''
+                : 'far';
+          const cardEl = document.createElement('div');
+          cardEl.className = 'match ' + cls;
+          cardEl.innerHTML = `
+            <img src="${r.thumbUrl}" />
+            <div>${escapeHtml(r.card.name)}</div>
+            <div style="font-size: 0.7rem; color: var(--fg-muted)">${escapeHtml(r.card.set_name ?? '')} (${escapeHtml(r.card.set?.toUpperCase() ?? '')})</div>
+            <div class="distance">${r.dist} bits${r.isTarget ? ' ✓' : ''}</div>
+          `;
+          item.matchesEl.appendChild(cardEl);
+        }
+      }
+    </script>
+  </body>
+</html>
