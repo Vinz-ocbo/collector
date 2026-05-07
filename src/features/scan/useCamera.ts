@@ -52,7 +52,15 @@ export function useCamera(): UseCameraResult {
     setErrorMessage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          // Ask for the best resolution the camera supports up to ~Full HD.
+          // `ideal` lets the browser fall back gracefully on lower-end
+          // hardware. The card title is small relative to the frame, so
+          // every extra pixel of native resolution improves OCR.
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: false,
       });
       if (generationRef.current !== gen) {

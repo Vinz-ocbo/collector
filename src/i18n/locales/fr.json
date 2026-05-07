@@ -590,8 +590,10 @@
       "empty": "Aucun texte détecté.",
       "confidence": "Confiance : {{value}} %",
       "error": "Échec de la reconnaissance. Réessayez.",
-      "regionLabel": "Image envoyée à l’OCR",
-      "regionAlt": "Zone de la carte analysée par la reconnaissance"
+      "titleRegionLabel": "Image envoyée à l’OCR (zone titre)",
+      "titleRegionAlt": "Bande titre extraite de la carte",
+      "cardRegionLabel": "Zone carte extraite",
+      "cardRegionAlt": "Carte recadrée à partir du rectangle de cadrage"
     }
   },
   "profile": {

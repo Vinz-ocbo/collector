@@ -22,7 +22,12 @@ type CapturedImage = {
 type OcrState =
   | { kind: 'idle' }
   | { kind: 'processing' }
-  | { kind: 'done'; result: OcrResult; regionUrl: string }
+  | {
+      kind: 'done';
+      result: OcrResult;
+      titleRegionUrl: string;
+      cardRegionUrl: string | null;
+    }
   | { kind: 'error' };
 
 // Fraction of the card region (top-down) sent to OCR. The Magic title bar
@@ -56,9 +61,12 @@ export function ScanPage() {
         ? await cropToRect(captured.blob, captured.cardRect)
         : captured.blob;
       const titleRegion = await cropTopFraction(cardRegion, TITLE_REGION_FRACTION);
-      const regionUrl = URL.createObjectURL(titleRegion);
+      // Card-region URL is only meaningful when we actually cropped — for the
+      // file-picker path the captured frame itself is the card region.
+      const cardRegionUrl = captured.cardRect ? URL.createObjectURL(cardRegion) : null;
+      const titleRegionUrl = URL.createObjectURL(titleRegion);
       const result = await recognizeCardText(titleRegion);
-      setOcrState({ kind: 'done', result, regionUrl });
+      setOcrState({ kind: 'done', result, titleRegionUrl, cardRegionUrl });
     } catch {
       setOcrState({ kind: 'error' });
     }
@@ -72,12 +80,13 @@ export function ScanPage() {
     };
   }, [captured]);
 
-  // Revoke the OCR-region preview URL when leaving the 'done' state.
+  // Revoke the OCR-region preview URLs when leaving the 'done' state.
   useEffect(() => {
     if (ocrState.kind !== 'done') return;
-    const url = ocrState.regionUrl;
+    const { titleRegionUrl, cardRegionUrl } = ocrState;
     return () => {
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(titleRegionUrl);
+      if (cardRegionUrl) URL.revokeObjectURL(cardRegionUrl);
     };
   }, [ocrState]);
 
@@ -158,13 +167,25 @@ export function ScanPage() {
               <p className="mt-2 text-xs text-fg-muted">
                 {t('scan.ocr.confidence', { value: ocrState.result.confidence })}
               </p>
+              {ocrState.cardRegionUrl ? (
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-xs uppercase tracking-wide text-fg-muted">
+                    {t('scan.ocr.cardRegionLabel')}
+                  </p>
+                  <img
+                    src={ocrState.cardRegionUrl}
+                    alt={t('scan.ocr.cardRegionAlt')}
+                    className="mx-auto mt-2 max-h-64 rounded border border-border bg-black/20"
+                  />
+                </div>
+              ) : null}
               <div className="mt-3 border-t border-border pt-3">
                 <p className="text-xs uppercase tracking-wide text-fg-muted">
-                  {t('scan.ocr.regionLabel')}
+                  {t('scan.ocr.titleRegionLabel')}
                 </p>
                 <img
-                  src={ocrState.regionUrl}
-                  alt={t('scan.ocr.regionAlt')}
+                  src={ocrState.titleRegionUrl}
+                  alt={t('scan.ocr.titleRegionAlt')}
                   className="mt-2 w-full rounded border border-border bg-black/20"
                 />
               </div>

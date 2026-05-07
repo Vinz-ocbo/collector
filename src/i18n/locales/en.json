@@ -590,8 +590,10 @@
       "empty": "No text detected.",
       "confidence": "Confidence: {{value}}%",
       "error": "Recognition failed. Try again.",
-      "regionLabel": "Image sent to OCR",
-      "regionAlt": "Card region analysed by recognition"
+      "titleRegionLabel": "Image sent to OCR (title region)",
+      "titleRegionAlt": "Title bar extracted from the card",
+      "cardRegionLabel": "Extracted card region",
+      "cardRegionAlt": "Card cropped from the framing rectangle"
     }
   },
   "profile": {
