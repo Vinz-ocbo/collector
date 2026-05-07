@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeOtsuThreshold, isMostlyDark, toGrayscale } from './preprocessForOcr';
+import { computeMean, stretchContrast, toGrayscale } from './preprocessForOcr';
 
 function rgba(...pixels: number[][]): Uint8ClampedArray {
   const out = new Uint8ClampedArray(pixels.length * 4);
@@ -30,57 +30,51 @@ describe('toGrayscale', () => {
   });
 });
 
-describe('computeOtsuThreshold', () => {
-  it('finds the valley between two clearly separated populations', () => {
-    // 100 dark pixels (value 30), 100 light pixels (value 200).
-    // Otsu returns the upper bound of the background class — i.e. the
-    // largest value still considered background. For this input that is
-    // anywhere in [30, 199]: the dark pixels stay <= threshold, the light
-    // pixels stay > threshold.
-    const arr = new Uint8Array(200);
-    arr.fill(30, 0, 100);
-    arr.fill(200, 100, 200);
-    const threshold = computeOtsuThreshold(arr);
-    expect(threshold).toBeGreaterThanOrEqual(30);
-    expect(threshold).toBeLessThan(200);
+describe('computeMean', () => {
+  it('returns the arithmetic mean of the grayscale buffer', () => {
+    const arr = new Uint8Array([10, 20, 30, 40]);
+    expect(computeMean(arr)).toBe(25);
   });
 
-  it('returns 128 fallback for an empty input', () => {
-    expect(computeOtsuThreshold(new Uint8Array(0))).toBe(128);
-  });
-
-  it('handles a single-value input gracefully', () => {
-    const arr = new Uint8Array(50);
-    arr.fill(150);
-    // No bimodal distribution, but the function must still return a sane
-    // value (any of 0-255 is acceptable; we just don't want NaN/throw).
-    const threshold = computeOtsuThreshold(arr);
-    expect(threshold).toBeGreaterThanOrEqual(0);
-    expect(threshold).toBeLessThanOrEqual(255);
+  it('returns 0 for an empty buffer (no NaN)', () => {
+    expect(computeMean(new Uint8Array(0))).toBe(0);
   });
 });
 
-describe('isMostlyDark', () => {
-  it('is true when more than half the pixels are below 128', () => {
-    // 3 dark, 1 light.
-    const buf = rgba([0, 0, 0], [50, 50, 50], [80, 80, 80], [200, 200, 200]);
-    expect(isMostlyDark(buf)).toBe(true);
+describe('stretchContrast', () => {
+  it('remaps the darkest input to 0 and the brightest to 255', () => {
+    // Three pixels with grayscale values 50, 100, 200 → after stretch should
+    // span the full 0..255 range. Pixels themselves can be anything in RGB
+    // since stretch is driven by the grayscale buffer.
+    const pixels = rgba([0, 0, 0], [0, 0, 0], [0, 0, 0]);
+    const gray = new Uint8Array([50, 100, 200]);
+    stretchContrast(pixels, gray);
+    expect(pixels[0]).toBe(0); // (50 - 50) * 255 / 150 = 0
+    expect(pixels[4]).toBe(85); // (100 - 50) * 255 / 150 = 85
+    expect(pixels[8]).toBe(255); // (200 - 50) * 255 / 150 = 255
   });
 
-  it('is false when less than half the pixels are below 128', () => {
-    // 1 dark, 3 light — typical "dark text on light bg" case.
-    const buf = rgba([10, 10, 10], [200, 200, 200], [220, 220, 220], [240, 240, 240]);
-    expect(isMostlyDark(buf)).toBe(false);
+  it('handles a flat image without dividing by zero', () => {
+    const pixels = rgba([0, 0, 0], [0, 0, 0]);
+    const gray = new Uint8Array([128, 128]);
+    stretchContrast(pixels, gray);
+    // No stretch possible; we just write the grayscale value back.
+    expect(pixels[0]).toBe(128);
+    expect(pixels[4]).toBe(128);
   });
 
-  it('is false at the boundary (exactly half)', () => {
-    // 2 dark, 2 light — must NOT trigger inversion (we only invert when
-    // background is clearly dark).
-    const buf = rgba([0, 0, 0], [10, 10, 10], [240, 240, 240], [250, 250, 250]);
-    expect(isMostlyDark(buf)).toBe(false);
+  it('writes the same value to R, G and B (and leaves alpha alone)', () => {
+    const pixels = rgba([10, 20, 30, 200]);
+    const gray = new Uint8Array([100]);
+    stretchContrast(pixels, gray);
+    expect(pixels[0]).toBe(pixels[1]);
+    expect(pixels[1]).toBe(pixels[2]);
+    expect(pixels[3]).toBe(200); // alpha untouched
   });
 
-  it('is false on empty input', () => {
-    expect(isMostlyDark(new Uint8ClampedArray(0))).toBe(false);
+  it('is a no-op on empty input', () => {
+    const pixels = new Uint8ClampedArray(0);
+    const gray = new Uint8Array(0);
+    expect(() => stretchContrast(pixels, gray)).not.toThrow();
   });
 });

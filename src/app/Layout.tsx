@@ -15,7 +15,7 @@ export function Layout() {
   const { t } = useTranslation();
   return (
     <div className="flex min-h-dvh flex-col">
-      <main className="flex-1 pb-20">
+      <main className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
       <nav

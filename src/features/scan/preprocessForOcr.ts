@@ -1,22 +1,29 @@
 /**
  * Pre-process the title-region image before handing it to Tesseract.
  *
- * Pipeline (in order):
- *   1. 2x upscale  — gives Tesseract more pixels per character. The recommended
- *                    height for reliable OCR is ≥30 px per character; the
- *                    captured title region often comes in below that on
- *                    smaller phone resolutions. Bilinear is enabled.
- *   2. Grayscale   — drops the colour channel so brightness is the only signal.
- *   3. Otsu binarize — picks an optimal black/white threshold from the
- *                    histogram. Removes JPEG noise, lifts contrast to 100%,
- *                    and produces the high-contrast input Tesseract was
- *                    trained on.
- *   4. Auto-invert — Tesseract expects dark text on a light background. After
- *                    Otsu, we count black pixels vs total; if the majority
- *                    are black (i.e. the *background* is dark), we invert.
- *                    This is more robust than relying on the original mean
- *                    luminance because pure-blue title bars are dark in RGB
- *                    luminance terms even though their text is dark too.
+ * Earlier versions binarised via Otsu, but that thinned out the text on
+ * Magic title bars (the bilinear upscale created mid-tone edges that
+ * Otsu misclassified as background) and clashed with Tesseract's own
+ * internal Otsu pass — double-thresholding gave worse results than no
+ * preprocessing at all.
+ *
+ * The current pipeline is conservative: we just make Tesseract's job
+ * easier without trying to do its job for it.
+ *
+ *   1. 2x upscale, nearest-neighbour — gives more pixels per character
+ *      (Tesseract recommends ≥30 px) without introducing anti-aliasing
+ *      that softens stroke edges.
+ *   2. Grayscale — drops chroma noise so the OCR engine sees only
+ *      luminance, which is what its internal threshold cares about.
+ *   3. Linear contrast stretch — remap the actual min/max pixel values
+ *      to [0, 255]. A faded photo of "dark text on light blue" maps
+ *      from e.g. (40..170) into (0..255), giving Tesseract crisp
+ *      separation to threshold.
+ *   4. Auto-invert based on the *original* mean luminance — for cards
+ *      with dark frames (light text on dark bg), Tesseract still
+ *      benefits from being handed a dark-on-light image. We use mean
+ *      luminance < 96 as the trigger so a regular blue title bar
+ *      (mean ~130-150 even with dark text) doesn't false-trigger.
  */
 
 export async function preprocessForOcr(blob: Blob): Promise<Blob> {
@@ -31,23 +38,24 @@ export async function preprocessForOcr(blob: Blob): Promise<Blob> {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas 2D context unavailable');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    // Nearest-neighbour: preserves crisp character edges. Bilinear
+    // smoothing would feather strokes and mislead Tesseract.
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, 0, 0, w, h);
 
     const imageData = ctx.getImageData(0, 0, w, h);
     const pixels = imageData.data;
     const grayscale = toGrayscale(pixels);
-    const threshold = computeOtsuThreshold(grayscale);
-    binarize(pixels, grayscale, threshold);
-    if (isMostlyDark(pixels)) {
-      invert(pixels);
+    const meanLuminance = computeMean(grayscale);
+    stretchContrast(pixels, grayscale);
+    if (meanLuminance < INVERT_THRESHOLD) {
+      invertInPlace(pixels);
     }
     ctx.putImageData(imageData, 0, 0);
 
     return await new Promise<Blob>((resolve, reject) => {
-      // PNG output: the image is now pure black/white, JPEG would re-introduce
-      // compression artefacts at exactly the edges Tesseract relies on.
+      // PNG: lossless. JPEG would re-introduce compression noise on the
+      // text edges that we just spent effort cleaning up.
       canvas.toBlob((b) => {
         if (b) resolve(b);
         else reject(new Error('Canvas toBlob returned null'));
@@ -57,6 +65,9 @@ export async function preprocessForOcr(blob: Blob): Promise<Blob> {
     URL.revokeObjectURL(url);
   }
 }
+
+/** Threshold below which we consider the image "dark frame" and invert. */
+export const INVERT_THRESHOLD = 96;
 
 /**
  * Convert RGBA pixel data to a flat array of 8-bit luminance values, one per
@@ -74,77 +85,49 @@ export function toGrayscale(rgba: Uint8ClampedArray): Uint8Array {
   return out;
 }
 
+/** Mean of a Uint8Array. Returns 0 for empty input rather than NaN. */
+export function computeMean(grayscale: Uint8Array): number {
+  if (grayscale.length === 0) return 0;
+  let sum = 0;
+  for (let i = 0; i < grayscale.length; i++) sum += grayscale[i] ?? 0;
+  return sum / grayscale.length;
+}
+
 /**
- * Otsu's method: pick the threshold that maximises the between-class variance
- * of foreground vs background pixels. Standard reference algorithm — runs in
- * O(256) over the histogram.
+ * Linear contrast stretch: read min/max from the grayscale buffer and
+ * rewrite the RGBA pixels so the darkest input becomes 0 and the
+ * brightest becomes 255. Identity if the input is flat (min == max).
  */
-export function computeOtsuThreshold(grayscale: Uint8Array): number {
-  const histogram = new Array<number>(256).fill(0);
+export function stretchContrast(rgba: Uint8ClampedArray, grayscale: Uint8Array): void {
+  if (grayscale.length === 0) return;
+  let min = 255;
+  let max = 0;
   for (let i = 0; i < grayscale.length; i++) {
-    histogram[grayscale[i] ?? 0]!++;
+    const v = grayscale[i] ?? 0;
+    if (v < min) min = v;
+    if (v > max) max = v;
   }
-  const total = grayscale.length;
-  if (total === 0) return 128;
-  let sumTotal = 0;
-  for (let i = 0; i < 256; i++) sumTotal += i * (histogram[i] ?? 0);
-  let sumB = 0;
-  let weightB = 0;
-  let maxVariance = -1;
-  let threshold = 128;
-  for (let i = 0; i < 256; i++) {
-    const count = histogram[i] ?? 0;
-    weightB += count;
-    if (weightB === 0) continue;
-    const weightF = total - weightB;
-    if (weightF === 0) break;
-    sumB += i * count;
-    const meanB = sumB / weightB;
-    const meanF = (sumTotal - sumB) / weightF;
-    const variance = weightB * weightF * (meanB - meanF) * (meanB - meanF);
-    if (variance > maxVariance) {
-      maxVariance = variance;
-      threshold = i;
+  if (max === min) {
+    // Flat image — just write the grayscale value back into RGB so the
+    // chroma channel is gone, but don't divide by zero.
+    for (let i = 0, j = 0; i < rgba.length; i += 4, j++) {
+      const v = grayscale[j] ?? 0;
+      rgba[i] = v;
+      rgba[i + 1] = v;
+      rgba[i + 2] = v;
     }
+    return;
   }
-  return threshold;
-}
-
-/**
- * Apply the threshold to the grayscale buffer and write the binary result
- * back into the RGBA pixel data (R=G=B=value, A unchanged).
- */
-function binarize(rgba: Uint8ClampedArray, grayscale: Uint8Array, threshold: number): void {
-  // Strictly greater than the threshold → foreground (white). Otsu's loop
-  // accumulates `weightB` *after* including pixels equal to the current
-  // intensity, so the returned T is the upper bound of the background class:
-  // pixels with value <= T are background, pixels > T are foreground.
+  const scale = 255 / (max - min);
   for (let i = 0, j = 0; i < rgba.length; i += 4, j++) {
-    const value = (grayscale[j] ?? 0) > threshold ? 255 : 0;
-    rgba[i] = value;
-    rgba[i + 1] = value;
-    rgba[i + 2] = value;
+    const v = Math.round(((grayscale[j] ?? 0) - min) * scale);
+    rgba[i] = v;
+    rgba[i + 1] = v;
+    rgba[i + 2] = v;
   }
 }
 
-/**
- * Decide whether the binary image is "background dark, text light" — in which
- * case Tesseract will fail and we must invert. Heuristic: in a typical
- * scanned page, the background dominates pixel count and the text is the
- * minority. So if more than half the pixels are black, the background is
- * black → we have light text on dark background.
- */
-export function isMostlyDark(rgba: Uint8ClampedArray): boolean {
-  let dark = 0;
-  let total = 0;
-  for (let i = 0; i < rgba.length; i += 4) {
-    if ((rgba[i] ?? 0) < 128) dark++;
-    total++;
-  }
-  return total > 0 && dark > total / 2;
-}
-
-function invert(rgba: Uint8ClampedArray): void {
+function invertInPlace(rgba: Uint8ClampedArray): void {
   for (let i = 0; i < rgba.length; i += 4) {
     rgba[i] = 255 - (rgba[i] ?? 0);
     rgba[i + 1] = 255 - (rgba[i + 1] ?? 0);
