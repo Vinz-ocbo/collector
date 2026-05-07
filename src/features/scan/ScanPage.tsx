@@ -136,7 +136,7 @@ export function ScanPage() {
 
   if (captured) {
     return (
-      <section className="flex h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-bg">
+      <section className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden bg-bg">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="mx-auto aspect-[5/7] w-full max-w-xs overflow-hidden rounded-lg bg-bg-raised">
             <img
@@ -252,7 +252,7 @@ export function ScanPage() {
 
   if (status === 'streaming') {
     return (
-      <section className="flex h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-black">
+      <section className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden bg-black">
         <div className="relative flex-1 overflow-hidden">
           <video
             ref={videoRef}
@@ -295,7 +295,7 @@ export function ScanPage() {
 
   if (status === 'requesting') {
     return (
-      <section className="flex h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] items-center justify-center p-4">
+      <section className="flex h-[calc(100dvh-5rem)] items-center justify-center p-4">
         <p role="status" aria-live="polite" className="text-fg-muted">
           {t('scan.requesting')}
         </p>
@@ -308,7 +308,7 @@ export function ScanPage() {
   const canRetry = status !== 'unsupported';
 
   return (
-    <section className="flex h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] flex-col items-center justify-center gap-4 p-4">
+    <section className="flex h-[calc(100dvh-5rem)] flex-col items-center justify-center gap-4 p-4">
       <EmptyState
         icon={<Camera className="h-12 w-12" aria-hidden="true" />}
         title={tDynamic(t, `scan.${fallbackKey}.title`)}
