@@ -6,6 +6,7 @@ import { tDynamic } from '@/shared/lib';
 import { captureFrame } from './captureFrame';
 import { computeGuideRectInNative, cropToRect, cropTopFraction, type ImageRect } from './cropImage';
 import { recognizeCardText, type OcrResult } from './ocr';
+import { preprocessForOcr } from './preprocessForOcr';
 import { useCamera } from './useCamera';
 
 type CapturedImage = {
@@ -61,11 +62,15 @@ export function ScanPage() {
         ? await cropToRect(captured.blob, captured.cardRect)
         : captured.blob;
       const titleRegion = await cropTopFraction(cardRegion, TITLE_REGION_FRACTION);
+      // Pre-process before OCR: grayscale + Otsu binarization + auto-invert +
+      // 2x upscale. The diagnostic preview shows the *post-preprocess* image
+      // — i.e. exactly what Tesseract receives.
+      const ocrInput = await preprocessForOcr(titleRegion);
       // Card-region URL is only meaningful when we actually cropped — for the
       // file-picker path the captured frame itself is the card region.
       const cardRegionUrl = captured.cardRect ? URL.createObjectURL(cardRegion) : null;
-      const titleRegionUrl = URL.createObjectURL(titleRegion);
-      const result = await recognizeCardText(titleRegion);
+      const titleRegionUrl = URL.createObjectURL(ocrInput);
+      const result = await recognizeCardText(ocrInput);
       setOcrState({ kind: 'done', result, titleRegionUrl, cardRegionUrl });
     } catch {
       setOcrState({ kind: 'error' });

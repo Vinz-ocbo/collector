@@ -12,6 +12,9 @@ vi.mock('./cropImage', () => ({
   cropToRect: vi.fn((blob: Blob) => Promise.resolve(blob)),
   computeGuideRectInNative: vi.fn(() => ({ x: 0, y: 0, width: 100, height: 100 })),
 }));
+vi.mock('./preprocessForOcr', () => ({
+  preprocessForOcr: vi.fn((blob: Blob) => Promise.resolve(blob)),
+}));
 
 import { recognizeCardText } from './ocr';
 
